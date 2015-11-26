@@ -1,0 +1,6 @@
+[submodule "vendor/elm-signal-extra"]
+	path = vendor/elm-signal-extra
+	url = git@github.com:Apanatshka/elm-signal-extra.git
+[submodule "vendor/elm-matrix"]
+	path = vendor/elm-matrix
+	url = git@github.com:chendrix/elm-matrix.git

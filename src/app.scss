@@ -1,0 +1,39 @@
+%type {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 16px;
+}
+
+body {
+  margin: 0;
+  @extend %type;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td {
+  border: 1px solid lightgray;
+  margin: 0;
+  width: 80px;
+  overflow-x: scroll;
+  padding: 2px 2px;
+  &.selected {
+    border: 1px double red;
+  }
+
+  &.editing {
+    border-color: blue !important;
+  }
+
+  input {
+    display: table-cell;
+    width: 100%;
+    outline: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    @extend %type;
+  }
+}

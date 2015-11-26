@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Lot</title>
+    <link rel="stylesheet" href="app.css" type="text/css" />
+  </head>
+  <body>
+    <script type="text/javascript" src="App.js"></script>
+    <script type="text/javascript" src="patches.js"></script>
+    <script type="text/javascript">
+      var app = Elm.fullscreen(Elm.App);
+      app.ports.focus.subscribe(function(state) {
+        var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
+        if (!state) {
+          var el = getEl()
+          if (el) el.blur();
+        } else {
+          setTimeout(function() {
+            var el = getEl();
+            el.focus();
+            var i = el.value.length;
+            el.setSelectionRange(i, i);
+          },50);
+        }
+      });
+    </script>
+  </body>
+</html>

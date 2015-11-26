@@ -1,0 +1,9 @@
+{
+  "name": "Lot",
+  "version": "0.0.0",
+  "devDependencies": {
+    "gulp": "*",
+    "gulp-elm": "*",
+    "gulp-sass": "*"
+  }
+}
