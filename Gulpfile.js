@@ -2,6 +2,10 @@ var gulp = require('gulp');
 var elm  = require('gulp-elm');
 var sass = require('gulp-sass');
 var path = require('path');
+var gutil = require('gulp-util');
+var ftp = require('vinyl-ftp');
+
+require('dotenv').load();
 
 var dest = path.resolve('./build');
 
@@ -31,4 +35,17 @@ gulp.task('watch', function() {
   gulp.watch('src/*.scss', ['sass']);
 });
 
-gulp.task('default', ['watch','elm', 'sass', 'copy:index', 'copy:js']);
+gulp.task('dist', ['elm', 'sass', 'copy:index', 'copy:js']);
+
+gulp.task('deploy', ['dist'], function() {
+  var conn = ftp.create({
+    host: process.env.DEPLOYMENT_FTP_HOST,
+    user: process.env.DEPLOYMENT_FTP_USERNAME,
+    password: process.env.DEPLOYMENT_FTP_PASSWORD,
+    log: gutil.log
+  });
+
+  return gulp.src(dest + '/*',{base:dest}).pipe(conn.dest( process.env.DEPLOYMENT_FTP_REMOTE_DIR));
+});
+
+gulp.task('default', ['watch','dist']);

@@ -4,6 +4,9 @@
   "devDependencies": {
     "gulp": "*",
     "gulp-elm": "*",
-    "gulp-sass": "*"
+    "gulp-sass": "*",
+    "gulp-util": "^3.0.7",
+    "vinyl-ftp": "^0.4.5",
+    "dotenv": "^1.2.0"
   }
 }
