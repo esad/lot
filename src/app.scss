@@ -17,7 +17,7 @@ td {
   border: 1px solid lightgray;
   margin: 0;
   width: 80px;
-  overflow-x: scroll;
+  overflow-x: hidden;
   padding: 2px 2px;
   &.selected {
     border: 1px double red;
