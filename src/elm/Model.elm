@@ -63,7 +63,8 @@ update action model =
       }
     Cancel ->
       { model |
-        editing = Nothing }
+          editing = Nothing 
+      }
     Edit char ->
       { model | 
           editing = 
