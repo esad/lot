@@ -36,4 +36,20 @@ td {
     margin: 0;
     @extend %type;
   }
+
+  &:first-child {
+    border: none;
+    width: 20px;
+    text-align: center;
+    &.selected {
+      color: red;
+    }
+  }
+}
+
+th {
+  font-weight: normal;
+  &.selected {
+    color: red; 
+  }
 }
