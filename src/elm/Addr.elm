@@ -1,8 +1,10 @@
-module Addr (Addr, row, col, fromColRow, add, identifier, rowIdentifier, colIdentifier) where
+module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier) where
 
 import Array
 import Char
 import String
+import Regex
+import Maybe exposing (andThen)
 
 type Addr = Addr Int Int
 
@@ -39,10 +41,16 @@ toBase b v =
     else
       toBase' [] v
 
+fromBase : Int -> List Int -> Int
+fromBase b digits =
+  List.reverse digits
+  |> List.indexedMap (\i n -> b ^ i * n)
+  |> List.sum
+
 colIdentifier : Int -> String
 colIdentifier col =
   col
-  |> toBase (Array.length alphabet)
+  |> toBase 26
   |> List.filterMap (\n -> Array.get n alphabet)
   |> String.fromList
 
@@ -50,8 +58,36 @@ rowIdentifier : Int -> String
 rowIdentifier row =
   row + 1 |> toString 
 
-identifier : Addr -> String
-identifier addr =
+toIdentifier : Addr -> String
+toIdentifier addr =
   (col addr |> colIdentifier)
   ++
   (row addr |> rowIdentifier)
+
+fromIdentifier : String -> Maybe Addr
+fromIdentifier id =
+  let
+    parseCol id =
+      id 
+      |> String.toList
+      |> List.map (Char.toCode >> (flip (-) 65))
+      |> fromBase 26
+    parseRow id =
+      case String.toInt id of
+        Ok r -> Just (r - 1)
+        _ -> Nothing
+    re =
+      Regex.regex "^([A-Z]+)([1-9][0-9]*)"
+    submatches =
+      id 
+      |> String.toUpper
+      |> Regex.find Regex.All re
+      |> List.concatMap .submatches
+      |> List.filterMap identity
+  in
+    case submatches of
+      (colId :: rowId :: _) ->
+        case (parseCol colId, parseRow rowId) of 
+          (col, Just row) -> fromColRow col row |> Just
+          _ -> Nothing
+      _ -> Nothing
