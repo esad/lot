@@ -29,22 +29,19 @@ alphabet =
   Array.initialize 26 (((+) 65) >> Char.fromCode)
 
 toBase : Int -> Int -> List Int
-toBase b v = 
-  let toBase' list v =
-    if v == 0 then
+toBase b q = 
+  let toBase' list q =
+    if q < 0 then
       list
     else
-      toBase' (v `rem` b :: list) (v // b)
+      toBase' (q `rem` b :: list) (q // b - 1)
   in
-    if v == 0 then
-      [0]
-    else
-      toBase' [] v
+    toBase' [] q
 
 fromBase : Int -> List Int -> Int
 fromBase b digits =
   List.reverse digits
-  |> List.indexedMap (\i n -> b ^ i * n)
+  |> List.indexedMap (\i n -> b ^ i * (if i > 0 then n+1 else n))
   |> List.sum
 
 colIdentifier : Int -> String
