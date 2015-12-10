@@ -39,7 +39,13 @@ inputs =
         |> Signal.map codeToAction
         |> Signal.Extra.filter Nop
     movement =
-      Keyboard.arrows ~> Move
+      let action dir altKey =
+        case (dir.x, dir.y, altKey) of
+          (0, 0, _) -> Nop
+          (_, _, True) -> Insert dir
+          (_, _, False) -> Move dir
+      in
+        Signal.Extra.passiveMap2 action Keyboard.arrows (Keyboard.isDown 18)
   in
     Signal.mergeMany (actions.signal :: [movement, pressesWhenNotEditing])
 

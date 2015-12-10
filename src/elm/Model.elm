@@ -29,6 +29,7 @@ type Action
   = Nop -- do nothing
   | Select Addr -- Direct selection of the cell at given address
   | Move {x: Int, y: Int} -- Keyboard movement in this relative direction
+  | Insert {x: Int, y: Int} -- Insert row/col in this direction
   | Edit (Maybe Char) -- Start editing. Can be triggerered by a character pressed by user (Just Char) or by doubleclick (Nothing)
   | Commit Addr String
   | Cancel
@@ -79,3 +80,21 @@ update action model =
           selection = Sheet.translate model.selection direction.x (direction.y * -1) model.sheet,
           editing = Nothing
       }
+    Insert direction ->
+      let
+        sheet = 
+          if direction.x /= 0 then
+            Sheet.insertCol (Addr.col model.selection) model.sheet
+          else
+            Sheet.insertRow (Addr.row model.selection) model.sheet
+        selection =
+          -- If inserting to the right/bottom, advance selection by one, otherwise keep selection
+          if direction.x + direction.y == 1 then
+            Sheet.translate model.selection direction.x direction.y sheet
+          else
+            model.selection
+      in
+        { model |
+            selection = selection,
+            sheet = sheet 
+        }

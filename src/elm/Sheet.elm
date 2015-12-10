@@ -1,7 +1,8 @@
-module Sheet (Cell(..), Sheet, initialize, get, update, toList, cell2str, translate) where
+module Sheet (Cell(..), Sheet, initialize, get, update, toList, cell2str, translate, insertRow, insertCol) where
 
 import Addr exposing (Addr)
 import Matrix
+import Helpers.Matrix
 import Basics
 
 type Cell
@@ -56,3 +57,11 @@ translate src cols rows sheet =
 toList : Sheet -> List (List Cell)
 toList sheet =
   Matrix.toList sheet.cells
+
+insertRow : Int -> Sheet -> Sheet
+insertRow row sheet =
+  { sheet | cells = Helpers.Matrix.insertRow row (always EmptyCell) sheet.cells }
+
+insertCol : Int -> Sheet -> Sheet
+insertCol col sheet =
+  { sheet | cells = Helpers.Matrix.insertCol col (always EmptyCell) sheet.cells }
