@@ -42,7 +42,7 @@ td {
     width: 20px;
     text-align: center;
     &.selected {
-      color: red;
+      font-weight: bold;
     }
   }
 }
@@ -50,6 +50,6 @@ td {
 th {
   font-weight: normal;
   &.selected {
-    color: red; 
+    font-weight: bold;
   }
 }
