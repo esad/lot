@@ -1,4 +1,4 @@
-module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier) where
+module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier, Direction(..), arrows2dir) where
 
 import Array
 import Char
@@ -24,32 +24,40 @@ add : Addr -> Addr -> Addr
 add a b =
   fromColRow (col a + col b) (row a + row b)
 
+type Direction = Up | Down | Left | Right
+
+-- Returns a Direction from value of Keyboard.arrows signal
+arrows2dir : {x : Int, y : Int} -> Maybe Direction
+arrows2dir a = 
+  case (a.x, a.y) of
+    (1, _) -> Just Right
+    (-1, _) -> Just Left
+    (_, 1) -> Just Up
+    (_, -1) -> Just Down
+    _ -> Nothing
+
+-- Identifiers
+
 alphabet : Array.Array Char
 alphabet = 
   Array.initialize 26 (((+) 65) >> Char.fromCode)
 
-toBase : Int -> Int -> List Int
-toBase b q = 
-  let toBase' list q =
-    if q < 0 then
-      list
-    else
-      toBase' (q `rem` b :: list) (q // b - 1)
-  in
-    toBase' [] q
-
-fromBase : Int -> List Int -> Int
-fromBase b digits =
-  List.reverse digits
-  |> List.indexedMap (\i n -> b ^ i * (if i > 0 then n+1 else n))
-  |> List.sum
-
 colIdentifier : Int -> String
 colIdentifier col =
-  col
-  |> toBase 26
-  |> List.filterMap (\n -> Array.get n alphabet)
-  |> String.fromList
+  let
+    toBase b q = 
+      let toBase' list q =
+        if q < 0 then
+          list
+        else
+          toBase' (q `rem` b :: list) (q // b - 1)
+      in
+        toBase' [] q
+  in
+    col
+    |> toBase 26
+    |> List.filterMap (\n -> Array.get n alphabet)
+    |> String.fromList
 
 rowIdentifier : Int -> String
 rowIdentifier row =
@@ -64,6 +72,10 @@ toIdentifier addr =
 fromIdentifier : String -> Maybe Addr
 fromIdentifier id =
   let
+    fromBase b digits =
+      List.reverse digits
+      |> List.indexedMap (\i n -> b ^ i * (if i > 0 then n+1 else n))
+      |> List.sum
     parseCol id =
       id 
       |> String.toList

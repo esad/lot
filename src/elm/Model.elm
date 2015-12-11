@@ -1,7 +1,7 @@
 module Model (Model, Action, Action(..), empty, update, isEditing) where
 
 import Sheet exposing (Cell(..))
-import Addr exposing (Addr)
+import Addr exposing (Addr, Direction(..))
 import Char
 import String
 import Maybe exposing (andThen)
@@ -28,8 +28,8 @@ isEditing model =
 type Action
   = Nop -- do nothing
   | Select Addr -- Direct selection of the cell at given address
-  | Move {x: Int, y: Int} -- Keyboard movement in this relative direction
-  | Insert {x: Int, y: Int} -- Insert row/col in this direction
+  | Move Addr.Direction -- Keyboard movement in this relative direction
+  | Insert Addr.Direction -- Insert row/col in this direction
   | Edit (Maybe Char) -- Start editing. Can be triggerered by a character pressed by user (Just Char) or by doubleclick (Nothing)
   | Commit Addr String
   | Cancel
@@ -58,7 +58,7 @@ update action model =
           selection =
             if addr == model.selection then
               -- Enter key was pressed, advance selection by one
-              Sheet.translate model.selection 0 1 model.sheet
+              Sheet.move model.selection Down model.sheet
             else
               model.selection
       }
@@ -77,20 +77,19 @@ update action model =
       }
     Move direction ->
       { model |
-          selection = Sheet.translate model.selection direction.x (direction.y * -1) model.sheet,
+          selection = Sheet.move model.selection direction model.sheet,
           editing = Nothing
       }
     Insert direction ->
       let
         sheet = 
-          if direction.x /= 0 then
+          if direction == Left || direction == Right  then
             Sheet.insertCol (Addr.col model.selection) model.sheet
           else
             Sheet.insertRow (Addr.row model.selection) model.sheet
         selection =
-          -- If inserting to the right/bottom, advance selection by one, otherwise keep selection
-          if direction.x + direction.y == 1 then
-            Sheet.translate model.selection direction.x direction.y sheet
+          if direction == Right || direction == Down then
+            Sheet.move model.selection direction sheet
           else
             model.selection
       in

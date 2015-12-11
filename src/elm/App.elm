@@ -4,6 +4,7 @@ import Keyboard
 import Signal exposing (Signal, Address)
 import Signal.Extra exposing ((~>), keepWhen)
 import Model exposing (Action(..))
+import Addr
 import Char
 import View
 import Html
@@ -39,11 +40,11 @@ inputs =
         |> Signal.map codeToAction
         |> Signal.Extra.filter Nop
     movement =
-      let action dir altKey =
-        case (dir.x, dir.y, altKey) of
-          (0, 0, _) -> Nop
-          (_, _, True) -> Insert dir
-          (_, _, False) -> Move dir
+      let action xy altKey =
+        case (Addr.arrows2dir xy, altKey) of
+          (Just dir, True) -> Insert dir
+          (Just dir, False) -> Move dir
+          _ -> Nop
       in
         Signal.Extra.passiveMap2 action Keyboard.arrows (Keyboard.isDown 18)
   in

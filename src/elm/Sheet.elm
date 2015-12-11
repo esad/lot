@@ -1,6 +1,6 @@
-module Sheet (Cell(..), Sheet, initialize, get, update, toList, cell2str, translate, insertRow, insertCol) where
+module Sheet (Cell(..), Sheet, initialize, get, update, toList, cell2str, move, insertRow, insertCol) where
 
-import Addr exposing (Addr)
+import Addr exposing (Addr, Direction(..))
 import Matrix
 import Helpers.Matrix
 import Basics
@@ -46,12 +46,18 @@ update : Addr -> (Cell -> Cell) -> Sheet -> Sheet
 update addr f sheet =
   { sheet | cells = Matrix.update (loc addr) f sheet.cells }
 
--- Translates address by given number of cols and rows, clamping it if it exceeds the current sheet
-translate : Addr -> Int -> Int -> Sheet -> Addr
-translate src cols rows sheet =
-  Addr.fromColRow cols rows
-  |> Addr.add src
-  |> flip clamp sheet
+-- Translates address by given direction, clamping it if it exceeds the current sheet
+move : Addr -> Addr.Direction -> Sheet -> Addr
+move a dir sheet =
+  let
+    end =
+      case dir of
+        Left  -> Addr.fromColRow (Addr.col a - 1) (Addr.row a)
+        Right -> Addr.fromColRow (Addr.col a + 1) (Addr.row a)
+        Up    -> Addr.fromColRow (Addr.col a) (Addr.row a - 1)
+        Down  -> Addr.fromColRow (Addr.col a) (Addr.row a + 1)
+  in
+    clamp end sheet
 
 ---- Returns list of rows, each a list containing cells for each column of that row
 toList : Sheet -> List (List Cell)
