@@ -24,6 +24,10 @@ gulp.task("copy:js", function() {
   return gulp.src("src/*.js").pipe(gulp.dest(dest))
 })
 
+gulp.task("copy:vendor", function() {
+  return gulp.src("src/vendor/**/*").pipe(gulp.dest(dest))
+})
+
 gulp.task('sass', function () {
   gulp.src('src/*.scss')
     .pipe(sass().on('error', sass.logError))
@@ -35,7 +39,7 @@ gulp.task('watch', function() {
   gulp.watch('src/*.scss', ['sass']);
 });
 
-gulp.task('dist', ['elm', 'sass', 'copy:index', 'copy:js']);
+gulp.task('dist', ['elm', 'sass', 'copy:index', 'copy:js', 'copy:vendor']);
 
 gulp.task('deploy', ['dist'], function() {
   var conn = ftp.create({

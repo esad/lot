@@ -4,8 +4,12 @@
   line-height: 16px;
 }
 
+html {
+  height: 100%;
+}
 body {
   margin: 0;
+  height: 100%;
   @extend %type;
 }
 
@@ -52,4 +56,18 @@ th {
   &.selected {
     font-weight: bold;
   }
+}
+
+body > div {
+  overflow: auto;
+  height: 100%;
+}
+
+.CodeMirror {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  //border-left: 1px solid gray;
 }

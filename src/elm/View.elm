@@ -1,8 +1,8 @@
 module View (view) where 
 
-import Html exposing (Html, span, text, table, thead, tbody, th, tr, td, button, input)
-import Html.Attributes exposing (classList, value, key)
-import Html.Events exposing (onClick, onDoubleClick)
+import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, input, textarea)
+import Html.Attributes exposing (classList, value, key, id)
+import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
 import Maybe
 
@@ -76,7 +76,16 @@ view address model =
       |> List.indexedMap viewRow
       |> tbody []
   in
-    table [] 
-      [ colHeader
-      , body
+    div 
+      []
+      [ table
+          [] 
+          [ colHeader
+          , body
+          ]
+      , textarea
+          [ id "code"
+          ]
+          []
       ]
+    

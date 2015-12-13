@@ -3,13 +3,20 @@
   <head>
     <meta charset="UTF-8">
     <title>Lot</title>
+
+    <script type="text/javascript" src="codemirror/codemirror.js"></script>
+    <script type="text/javascript" src="codemirror/simple.js"></script>
+    <script type="text/javascript" src="lot-cm.js"></script>
+    <link rel="stylesheet" href="codemirror/codemirror.css" type="text/css" />
+    <link rel="stylesheet" href="codemirror/vibrant-ink.css" type="text/css" />
+    
     <link rel="stylesheet" href="app.css" type="text/css" />
   </head>
   <body>
     <script type="text/javascript" src="App.js"></script>
     <script type="text/javascript" src="patches.js"></script>
     <script type="text/javascript">
-      var app = Elm.fullscreen(Elm.App);
+      var app = Elm.fullscreen(Elm.App, { codeFocused: false });
       app.ports.focus.subscribe(function(state) {
         var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
         if (!state) {
@@ -23,6 +30,18 @@
             el.setSelectionRange(i, i);
           },50);
         }
+      });
+
+      // Init editor
+      var cm = CodeMirror.fromTextArea(document.getElementById('code'), {
+        theme: 'vibrant-ink',
+        mode: 'lot'
+      });
+      cm.on('focus', function() {
+        app.ports.codeFocused.send(true);
+      });
+      cm.on('blur', function() {
+        app.ports.codeFocused.send(false);
       });
     </script>
   </body>
