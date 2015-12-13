@@ -49,7 +49,7 @@ gulp.task('deploy', ['dist'], function() {
     log: gutil.log
   });
 
-  return gulp.src(dest + '/*',{base:dest}).pipe(conn.dest( process.env.DEPLOYMENT_FTP_REMOTE_DIR));
+  return gulp.src(dest + '/**',{base:dest}).pipe(conn.dest( process.env.DEPLOYMENT_FTP_REMOTE_DIR));
 });
 
 gulp.task('default', ['watch','dist']);
