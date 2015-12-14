@@ -10,7 +10,7 @@
   }
 
   function constants() {
-    Object.keys(_constants).map(function(id) {
+    return Object.keys(_constants).map(function(id) {
       return sexp("declare-const", id, "Int");
     })
   }
@@ -20,12 +20,12 @@ program
   = expr:expr others:(([\n;]+ expr:expr?) { return expr; })* {
     return constants().concat([expr]).concat(others).filter(function(el) {
       return el != null
-    })
+    }).join("\n")
   }
 
 expr
   = _ left:add_expr _ op:bool_op _ right:add_expr _ {
-    return sexp(op, left, right)
+    return sexp('assert',sexp(op, left, right))
   }
 
 add_expr
@@ -54,7 +54,7 @@ atom
 cell "cell identifier"
   = col:[A-Za-z] row:positive_number {
     var id = [col,row].join('').toLowerCase(); 
-    return autodeclare(id)
+    return registerConstant(id)
   }
 
 integer "integer"
