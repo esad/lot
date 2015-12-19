@@ -4,6 +4,7 @@ var sass = require('gulp-sass');
 var path = require('path');
 var gutil = require('gulp-util');
 var ftp = require('vinyl-ftp');
+var webserver = require('gulp-webserver');
 
 require('dotenv').load();
 
@@ -21,11 +22,11 @@ gulp.task("copy:index", function () {
 });
 
 gulp.task("copy:js", function() {
-  return gulp.src("src/*.js").pipe(gulp.dest(dest))
+  return gulp.src("src/**/*.js").pipe(gulp.dest(dest))
 })
 
 gulp.task("copy:vendor", function() {
-  return gulp.src("src/vendor/**/*").pipe(gulp.dest(dest))
+  return gulp.src("vendor/**/*").pipe(gulp.dest(dest))
 })
 
 gulp.task('sass', function () {
@@ -39,9 +40,9 @@ gulp.task('watch', function() {
   gulp.watch('src/*.scss', ['sass']);
 });
 
-gulp.task('dist', ['elm', 'sass', 'copy:index', 'copy:js', 'copy:vendor']);
+gulp.task('build', ['elm', 'sass', 'copy:index', 'copy:js', 'copy:vendor']);
 
-gulp.task('deploy', ['dist'], function() {
+gulp.task('deploy', ['build'], function() {
   var conn = ftp.create({
     host: process.env.DEPLOYMENT_FTP_HOST,
     user: process.env.DEPLOYMENT_FTP_USERNAME,
@@ -52,4 +53,11 @@ gulp.task('deploy', ['dist'], function() {
   return gulp.src(dest + '/**',{base:dest}).pipe(conn.dest( process.env.DEPLOYMENT_FTP_REMOTE_DIR));
 });
 
-gulp.task('default', ['watch','dist']);
+gulp.task('serve', function() {
+  gulp.src(dest).pipe(webserver({
+    directoryListing: false,
+    open: true
+  }));
+});
+
+gulp.task('default', ['watch','build','serve']);

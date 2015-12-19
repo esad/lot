@@ -2,11 +2,12 @@
   "name": "Lot",
   "version": "0.0.0",
   "devDependencies": {
+    "dotenv": "^1.2.0",
     "gulp": "*",
     "gulp-elm": "*",
     "gulp-sass": "*",
     "gulp-util": "^3.0.7",
-    "vinyl-ftp": "^0.4.5",
-    "dotenv": "^1.2.0"
+    "gulp-webserver": "^0.9.1",
+    "vinyl-ftp": "^0.4.5"
   }
 }
