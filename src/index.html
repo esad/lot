@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8">
     <title>Lot</title>
-
     <script type="text/javascript" src="codemirror/codemirror.js"></script>
     <script type="text/javascript" src="codemirror/simple.js"></script>
-    <script type="text/javascript" src="lot-cm.js"></script>
+    <script type="text/javascript" src="zem/zem.js"></script>
+    <script type="text/javascript" src="zem/zem.parser.js"></script>
+    <script type="text/javascript" src="zem/codemirror.js"></script>
     <link rel="stylesheet" href="codemirror/codemirror.css" type="text/css" />
     <link rel="stylesheet" href="codemirror/vibrant-ink.css" type="text/css" />
-    
     <link rel="stylesheet" href="app.css" type="text/css" />
   </head>
   <body>
@@ -35,13 +35,23 @@
       // Init editor
       var cm = CodeMirror.fromTextArea(document.getElementById('code'), {
         theme: 'vibrant-ink',
-        mode: 'lot'
+        mode: 'zem'
       });
       cm.on('focus', function() {
         app.ports.codeFocused.send(true);
       });
       cm.on('blur', function() {
         app.ports.codeFocused.send(false);
+        var code = cm.getValue();
+        console.log(code);
+        zem.solve(cm.getValue()).then(function(result) {
+          console.log("Solved", result);
+        });
+      });
+
+      // Load Zem
+      Zem.load("./z3/z3.js").then(function(zem) {
+        window.zem = zem;
       });
     </script>
   </body>
