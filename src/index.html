@@ -16,7 +16,8 @@
     <script type="text/javascript" src="App.js"></script>
     <script type="text/javascript" src="patches.js"></script>
     <script type="text/javascript">
-      var app = Elm.fullscreen(Elm.App, { codeFocused: false });
+      var app = Elm.fullscreen(Elm.App, { codeFocused: false, newValues: null });
+      window.app = app;
       app.ports.focus.subscribe(function(state) {
         var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
         if (!state) {
@@ -46,6 +47,11 @@
         console.log(code);
         zem.solve(cm.getValue()).then(function(result) {
           console.log("Solved", result);
+          // Tell elm about new values:
+          Object.keys(result).forEach(function (name) {
+            var msg = {cellIdentifier: name, value: result[name]};
+            app.ports.newValues.send(msg);
+          });
         });
       });
 

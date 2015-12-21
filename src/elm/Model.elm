@@ -34,6 +34,7 @@ type Action
   | Commit Addr String
   | Cancel
   | Clear -- updates selection with nil value
+  | Set String String -- possibly updates a cell identifier with this value (tries parsing it)
 
 update : Action -> Model -> Model
 update action model =
@@ -96,4 +97,15 @@ update action model =
         { model |
             selection = selection,
             sheet = sheet 
+        }
+    Set cellIdentifier value ->
+      let
+        addr = Addr.fromIdentifier cellIdentifier
+        --value = readInt value
+      in
+        { model |
+          sheet = 
+            case (addr, value) of 
+              (Just a, _) -> Sheet.update a (always (TextCell value)) model.sheet
+              _ -> model.sheet
         }

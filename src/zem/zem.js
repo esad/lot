@@ -3,14 +3,32 @@ Zem = function(z3) {
   console.log("Zem and z3 loaded.");
 }
 
-Zem.prototype.solve = function(program, cb) {
+Zem.prototype.solve = function(program, bindingCallback) {
   var z3 = this.z3;
   return new Promise(function(resolve, reject) {
-    var smt2Program = Zem.Parser.parse(program);
-    console.log(smt2Program);
+    var output = Zem.Parser.parse(program);
+    console.log(output);
+    var smt2lines = output[0];
+    var vars = output[1];
+    console.log("here1");
+    var before = ["(push)"].concat(vars.map(function(v) { return "(declare-const " + v + " Int)"; }));
+    var bindings = [];
+    // get bindings
+    if (bindingCallback) {
+      bindings = vars.map(function(name) {
+        var value = bindingCallback(name);
+        return (value !== null) ? "(assert (= "+name+" "+parseInt(value)+"))" : null;
+      }).reject(function(line) { return line != null; });
+    }
+    var after = ["(check-sat)","(get-value ("+vars.join(" ")+"))", "(pop)"];
+
+    var smt2 = before.concat(bindings).concat(smt2lines).concat(after).join("\n");
+    
+    console.log(smt2);
+
     var stdout = [];
     var stderr = [];
-    z3.FS.createDataFile("/", "input.smt2", smt2Program, true, true);
+    z3.FS.createDataFile("/", "input.smt2", smt2, true, true);
     try {
       z3.Module.print = function(str) { stdout.push(str); }
       z3.Module.printErr = function(str) { stderr.push(str);}

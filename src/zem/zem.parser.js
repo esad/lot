@@ -40,11 +40,10 @@ Zem.Parser = (function() {
         peg$c1 = { type: "class", value: "[\\n;]", description: "[\\n;]" },
         peg$c2 = function(expr) { return expr; },
         peg$c3 = function(expr, others) {
-            var before = ["(push)"].concat(vars().map(function(name) { return sexp("declare-const", name, "Int") }));
-            var after = ["(check-sat)","(get-value ("+vars().join(" ")+"))", "(pop)"];
-            return before.concat([expr]).concat(others).concat(after).filter(function(line) {
+            var smt2 = [expr].concat(others).filter(function(line) {
               return line != null
-            }).join("\n")
+            });
+            return [smt2,vars()];
           },
         peg$c4 = function(left, op, right) {
             return sexp('assert',sexp(op, left, right))

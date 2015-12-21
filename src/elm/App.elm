@@ -28,12 +28,19 @@ port focus =
 -- Inbound
 port codeFocused : Signal Bool
 
+port newValues : Signal (Maybe { cellIdentifier: String, value: Int })
+
 actions =
   Signal.mailbox Nop
 
 inputs : Signal Model.Action
 inputs = 
   let
+    setNewValues =
+      newValues ~> \r ->
+        case r of
+          Just {cellIdentifier, value} -> Set cellIdentifier (toString value)
+          Nothing -> Nop
     pressesWhenNotEditing =
       let codeToAction code =
         case code of
@@ -56,7 +63,7 @@ inputs =
         Signal.Extra.passiveMap2 action Keyboard.arrows (Keyboard.isDown 18)
         |> keepWhen (codeFocused ~> not) Nop
   in
-    Signal.mergeMany (actions.signal :: [movement, pressesWhenNotEditing])
+    Signal.mergeMany (actions.signal :: [movement, pressesWhenNotEditing, setNewValues])
 
 model : Signal Model.Model
 model = 

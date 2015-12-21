@@ -19,11 +19,10 @@
 
 program
   = expr:expr others:(([\n;]+ expr:expr?) { return expr; })* {
-    var before = ["(push)"].concat(vars().map(function(name) { return sexp("declare-const", name, "Int") }));
-    var after = ["(check-sat)","(get-value ("+vars().join(" ")+"))", "(pop)"];
-    return before.concat([expr]).concat(others).concat(after).filter(function(line) {
+    var smt2 = [expr].concat(others).filter(function(line) {
       return line != null
-    }).join("\n")
+    });
+    return [smt2,vars()];
   }
 
 expr
