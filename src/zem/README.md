@@ -1,1 +1,1 @@
-A simple JavaScript frontend to Z3.
+A simple JavaScript frontend to z3-emscripten, to be replaced with pure Elm.

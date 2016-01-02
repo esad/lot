@@ -7,7 +7,6 @@
     "gulp-elm": "*",
     "gulp-sass": "*",
     "gulp-util": "^3.0.7",
-    "gulp-webserver": "^0.9.1",
     "vinyl-ftp": "^0.4.5"
   }
 }
