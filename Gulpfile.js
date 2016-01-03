@@ -37,6 +37,7 @@ gulp.task('sass', function () {
 gulp.task('watch', function() {
   gulp.watch('src/elm/*.elm', ['elm']);
   gulp.watch('src/*.scss', ['sass']);
+  gulp.watch('src/index.html', ['copy:index']);
 });
 
 gulp.task('build', ['elm', 'sass', 'copy:index', 'copy:js', 'copy:vendor']);
