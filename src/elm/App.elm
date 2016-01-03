@@ -2,73 +2,43 @@ module App where
 
 import Keyboard
 import Signal exposing (Signal, Address)
-import Signal.Extra exposing ((~>), keepWhen)
+import Signal.Extra exposing ((~>))
 import Model exposing (Action(..))
-import Addr
-import Char
 import View
 import Html
 import Task
+import StartApp
+import Effects
 
-{- Inputs depend on the model state, but such signal loops don't seem currently possible in Elm.
-   As a workaround, we use a port to which we feed model updates to "simulate" model changes
-   coming from the outside. -}
-modelIsEditing : Signal.Mailbox Bool
-modelIsEditing =
-  Signal.mailbox False
+-- Other inbound ports
 
-port updateModelIsEditing : Signal (Task.Task x ())
-port updateModelIsEditing =
-  (model ~> Model.isEditing |> Signal.dropRepeats) ~> (Signal.send modelIsEditing.address)
-
-port focus : Signal Bool
-port focus =
-  modelIsEditing.signal
-
--- Inbound
 port codeFocused : Signal Bool
+port code: Signal (Maybe String)
 
-port newValues : Signal (Maybe { cellIdentifier: String, value: Int })
-
-actions =
-  Signal.mailbox Nop
-
-inputs : Signal Model.Action
+inputs : List (Signal Model.Action)
 inputs = 
-  let
-    setNewValues =
-      newValues ~> \r ->
-        case r of
-          Just {cellIdentifier, value} -> Set cellIdentifier (toString value)
-          Nothing -> Nop
-    pressesWhenNotEditing =
-      let codeToAction code =
-        case code of
-          0 -> Nothing
-          8 -> Just Clear
-          otherwise -> code |> Char.fromCode >> Just >> Edit >> Just
-      in
-        Keyboard.presses
-        -- Only accept presses when code is not focused and model is not being edited
-        |> keepWhen (Signal.map2 (||) codeFocused modelIsEditing.signal ~> not) 0 
-        |> Signal.map codeToAction
-        |> Signal.Extra.filter Nop
-    movement =
-      let action xy altKey =
-        case (Addr.arrows2dir xy, altKey) of
-          (Just dir, True) -> Insert dir
-          (Just dir, False) -> Move dir
-          _ -> Nop
-      in
-        Signal.Extra.passiveMap2 action Keyboard.arrows (Keyboard.isDown 18)
-        |> keepWhen (codeFocused ~> not) Nop
-  in
-    Signal.mergeMany (actions.signal :: [movement, pressesWhenNotEditing, setNewValues])
+  [ Signal.Extra.passiveMap2
+      (\{x,y} alt -> InputArrows {x = x, y = y, alt = alt})
+      Keyboard.arrows
+      (Keyboard.isDown 18)
+  , Keyboard.presses ~> InputKeypress
+  , codeFocused ~> InputCodeFocused
+  , code ~> InputCode
+  ]
 
-model : Signal Model.Model
-model = 
-  Signal.foldp Model.update Model.empty inputs
+app : StartApp.App Model.Model
+app =
+  StartApp.start
+    { init = (Model.empty, Effects.none)
+    , view = View.view
+    , update = Model.update
+    , inputs = inputs
+    }
 
 main : Signal Html.Html
-main = 
-  Signal.map (View.view actions.address) model
+main =
+  app.html
+
+port tasks : Signal (Task.Task Effects.Never ())
+port tasks =
+  app.tasks

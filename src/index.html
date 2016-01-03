@@ -16,49 +16,49 @@
     <script type="text/javascript" src="App.js"></script>
     <script type="text/javascript" src="patches.js"></script>
     <script type="text/javascript">
-      var app = Elm.fullscreen(Elm.App, { codeFocused: false, newValues: null });
-      window.app = app;
-      app.ports.focus.subscribe(function(state) {
-        var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
-        if (!state) {
-          var el = getEl()
-          if (el) el.blur();
-        } else {
-          setTimeout(function() {
-            var el = getEl();
-            el.focus();
-            var i = el.value.length;
-            el.setSelectionRange(i, i);
-          },50);
-        }
-      });
+      var app = Elm.fullscreen(Elm.App, { codeFocused: false, code: null });
 
+      // app.ports.modelIsEditing.subscribe(function(editing) {
+      //   var state = !editing;
+      //   var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
+      //   if (!state) {
+      //     var el = getEl()
+      //     if (el) el.blur();
+      //   } else {
+      //     setTimeout(function() {
+      //       var el = getEl();
+      //       el.focus();
+      //       var i = el.value.length;
+      //       el.setSelectionRange(i, i);
+      //     },50);
+      //   }
+      // });
+
+      // app.ports.test.subscribe(function(state) {
+      //   console.log(state);
+      // });
+      
       // Init editor
       var cm = CodeMirror.fromTextArea(document.getElementById('code'), {
         theme: 'vibrant-ink',
         mode: 'zem'
       });
+
       cm.on('focus', function() {
         app.ports.codeFocused.send(true);
       });
+
       cm.on('blur', function() {
         app.ports.codeFocused.send(false);
-        var code = cm.getValue();
-        console.log(code);
-        zem.solve(cm.getValue()).then(function(result) {
-          console.log("Solved", result);
-          // Tell elm about new values:
-          Object.keys(result).forEach(function (name) {
-            var msg = {cellIdentifier: name, value: result[name]};
-            app.ports.newValues.send(msg);
-          });
-        });
+        app.ports.code.send(cm.getValue());
       });
 
+      app.ports.code.send(cm.getValue());
+
       // Load Zem
-      Zem.load("./z3-emscripten/z3.js").then(function(zem) {
-        window.zem = zem;
-      });
+      // Zem.load("./z3-emscripten/z3.js").then(function(zem) {
+      //   window.zem = zem;
+      // });
     </script>
   </body>
 </html>

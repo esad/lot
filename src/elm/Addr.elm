@@ -1,4 +1,4 @@
-module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier, Direction(..), arrows2dir) where
+module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier, Direction(..), xy2dir) where
 
 import Array
 import Char
@@ -27,8 +27,8 @@ add a b =
 type Direction = Up | Down | Left | Right
 
 -- Returns a Direction from value of Keyboard.arrows signal
-arrows2dir : {x : Int, y : Int} -> Maybe Direction
-arrows2dir a = 
+xy2dir : {a | x : Int, y : Int} -> Maybe Direction
+xy2dir a = 
   case (a.x, a.y) of
     (1, _) -> Just Right
     (-1, _) -> Just Left

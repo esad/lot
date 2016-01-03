@@ -7,13 +7,13 @@ import Signal
 import Maybe
 
 import Helpers
-import Model exposing (Action(..))
+import Model exposing (Action(..), Mode(..))
 import Sheet
 import Addr
 
 type Header = RowHeader | ColHeader
 
-nbsp = "\xa0" 
+nbsp = "\xa0"
 
 view : Signal.Address Action -> Model.Model -> Html
 view address model =
@@ -21,7 +21,9 @@ view address model =
     viewCell addr cell =
       let
         selected = addr == model.selection
-        editing = if selected then model.editing else Nothing
+        editing = case model.mode of
+          Code -> Nothing
+          Spreadsheet m -> if selected then m else Nothing
       in 
         case editing of
           Nothing ->
@@ -84,8 +86,7 @@ view address model =
           , body
           ]
       , textarea
-          [ id "code"
-          ]
-          []
+          [ id "code" ]
+          [ text model.code ]
       ]
     
