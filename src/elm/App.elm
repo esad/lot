@@ -3,9 +3,10 @@ module App where
 import Keyboard
 import Signal exposing (Signal, Address)
 import Signal.Extra exposing ((~>))
-import Model exposing (Action(..))
+import Model exposing (Action(..), Mode(..))
 import View
 import Html
+import Html.Lazy
 import Task
 import StartApp
 import Effects
@@ -30,7 +31,7 @@ app : StartApp.App Model.Model
 app =
   StartApp.start
     { init = (Model.empty, Effects.none)
-    , view = View.view
+    , view = Html.Lazy.lazy2 View.view
     , update = Model.update
     , inputs = inputs
     }
@@ -38,6 +39,16 @@ app =
 main : Signal Html.Html
 main =
   app.html
+
+port focus : Signal String
+port focus =
+  let focusString model =
+    case model.mode of
+      Code -> "code"
+      Spreadsheet Nothing -> "sheet"
+      Spreadsheet (Just _) -> "cellInput"
+  in
+  app.model ~> focusString
 
 port tasks : Signal (Task.Task Effects.Never ())
 port tasks =

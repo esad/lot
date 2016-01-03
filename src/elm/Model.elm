@@ -68,12 +68,24 @@ update action model =
       case (model.mode, key) of
         (_, 0) ->
           nop
+        (Code, 27) ->
+          -- Switch focus back to spreadsheet
+          noFx 
+            { model |
+              mode = Spreadsheet Nothing
+            }
         (Code, _) ->
           nop
         (Spreadsheet (Just _), _) ->
           nop
         (Spreadsheet Nothing, 8) ->
           anotherActionFx Clear model
+        (Spreadsheet Nothing, 27) ->
+          -- Switch focus to code
+          noFx
+            { model |
+              mode = Code
+            }
         (Spreadsheet Nothing, _) ->
           anotherActionFx (Edit (Just <| Char.fromCode key)) model
     InputCodeFocused focus ->

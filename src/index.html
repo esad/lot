@@ -18,30 +18,13 @@
     <script type="text/javascript">
       var app = Elm.fullscreen(Elm.App, { codeFocused: false, code: null });
 
-      // app.ports.modelIsEditing.subscribe(function(editing) {
-      //   var state = !editing;
-      //   var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
-      //   if (!state) {
-      //     var el = getEl()
-      //     if (el) el.blur();
-      //   } else {
-      //     setTimeout(function() {
-      //       var el = getEl();
-      //       el.focus();
-      //       var i = el.value.length;
-      //       el.setSelectionRange(i, i);
-      //     },50);
-      //   }
-      // });
-
-      // app.ports.test.subscribe(function(state) {
-      //   console.log(state);
-      // });
-      
       // Init editor
       var cm = CodeMirror.fromTextArea(document.getElementById('code'), {
         theme: 'vibrant-ink',
-        mode: 'zem'
+        mode: 'zem',
+        extraKeys: {
+          Esc: false // let app handle it
+        }
       });
 
       cm.on('focus', function() {
@@ -53,7 +36,28 @@
         app.ports.code.send(cm.getValue());
       });
 
-      app.ports.code.send(cm.getValue());
+      // Handle focus
+      app.ports.focus.subscribe(function(what) {
+        if (what == "code") {
+          cm.focus();
+        } else {
+          cm.getInputField().blur();
+        }
+
+        var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
+      
+        if (what == "cellInput") {
+          setTimeout(function() {
+            var el = getEl();
+            el.focus();
+            var i = el.value.length;
+            el.setSelectionRange(i, i);
+          },50);
+        } else {
+          var el = getEl();
+          if (el) el.blur();
+        }
+      });
 
       // Load Zem
       // Zem.load("./z3-emscripten/z3.js").then(function(zem) {
