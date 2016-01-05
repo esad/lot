@@ -10,11 +10,13 @@ import Html.Lazy
 import Task
 import StartApp
 import Effects
+import Solver
 
 -- Other inbound ports
 
 port codeFocused : Signal Bool
 port code: Signal (Maybe String)
+port z3: String -- path to z3-emscripten
 
 inputs : List (Signal Model.Action)
 inputs = 
@@ -30,7 +32,14 @@ inputs =
 app : StartApp.App Model.Model
 app =
   StartApp.start
-    { init = (Model.empty, Effects.none)
+    { init = 
+        ( Model.empty
+        -- Start loading solver at start
+        , Solver.load z3 
+          |> Task.toMaybe
+          |> Task.map LoadSolver
+          |> Effects.task
+        )
     , view = Html.Lazy.lazy2 View.view
     , update = Model.update
     , inputs = inputs
@@ -39,6 +48,7 @@ app =
 main : Signal Html.Html
 main =
   app.html
+
 
 port focus : Signal String
 port focus =

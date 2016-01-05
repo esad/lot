@@ -16,7 +16,11 @@
     <script type="text/javascript" src="App.js"></script>
     <script type="text/javascript" src="patches.js"></script>
     <script type="text/javascript">
-      var app = Elm.fullscreen(Elm.App, { codeFocused: false, code: null });
+      var app = Elm.fullscreen(Elm.App, {
+        codeFocused: false, 
+        code: null,
+        z3: "/z3-emscripten/z3.js"
+      });
 
       // Init editor
       var cm = CodeMirror.fromTextArea(document.getElementById('code'), {
@@ -58,11 +62,6 @@
           if (el) el.blur();
         }
       });
-
-      // Load Zem
-      // Zem.load("./z3-emscripten/z3.js").then(function(zem) {
-      //   window.zem = zem;
-      // });
     </script>
   </body>
 </html>

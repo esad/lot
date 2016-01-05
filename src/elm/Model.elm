@@ -7,6 +7,7 @@ import String
 import Maybe exposing (andThen)
 import Task
 import Effects
+import Solver
 
 type Mode
   --            Nothing: spreadsheet in navigation mode
@@ -34,6 +35,8 @@ type Action
   | InputKeypress Char.KeyCode
   | InputCode (Maybe String)
   | InputCodeFocused Bool
+  ---
+  | LoadSolver (Maybe Solver.Solver)
   ---
   | Select Addr -- Direct selection of the cell at given address
   | Move Addr.Direction -- Keyboard movement in this relative direction
@@ -100,7 +103,10 @@ update action model =
         { model | 
           code = code 
         }
-    ------
+    ---
+    LoadSolver solver ->
+      nop
+    ---
     Clear ->
       noFx
         { model |
