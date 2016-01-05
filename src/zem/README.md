@@ -1,1 +1,0 @@
-A simple JavaScript frontend to z3-emscripten, to be replaced with pure Elm.
