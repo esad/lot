@@ -1,6 +1,7 @@
 module Model (Model, Action, Action(..), empty, isEditing, update) where
 
-import Sheet exposing (Cell(..))
+import Sheet
+import Cell exposing (Cell(..))
 import Addr exposing (Addr, Direction(..))
 import Char
 import String
@@ -110,7 +111,7 @@ update action model =
           editing = 
             Maybe.oneOf 
               [ char `andThen` (String.fromChar >> Just)
-              , (Sheet.get model.selection model.sheet) `andThen` Sheet.cell2str
+              , (Sheet.get model.selection model.sheet) `andThen` Cell.toString
               , Just ""
               ]
         }

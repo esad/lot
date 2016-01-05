@@ -9,6 +9,7 @@ import Maybe
 import Helpers
 import Model exposing (Action(..))
 import Sheet
+import Cell
 import Addr
 
 type Header = RowHeader | ColHeader
@@ -32,9 +33,10 @@ view address model =
               , onClick address (Select addr)
               ]
               [
-                Sheet.cell2str cell
-                  |> Maybe.withDefault nbsp
-                  |> text
+                cell
+                |> Cell.toString
+                |> Maybe.withDefault nbsp
+                |> text
               ]
           Just editStr ->
             td

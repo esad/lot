@@ -1,19 +1,10 @@
-module Sheet (Cell(..), Sheet, initialize, get, update, toList, cell2str, move, insertRow, insertCol) where
+module Sheet (Sheet, initialize, get, update, toList, move, insertRow, insertCol) where
 
+import Cell exposing (Cell, Cell(..))
 import Addr exposing (Addr, Direction(..))
 import Matrix
 import Helpers.Matrix
 import Basics
-
-type Cell
-  = TextCell String 
-  | EmptyCell
-
-cell2str : Cell -> Maybe String
-cell2str cell =
-  case cell of
-    EmptyCell -> Nothing
-    TextCell text -> Just text
 
 type alias Sheet =
   { cells : Matrix.Matrix Cell }
