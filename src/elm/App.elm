@@ -3,7 +3,7 @@ module App where
 import Keyboard
 import Signal exposing (Signal, Address)
 import Signal.Extra exposing ((~>))
-import Model exposing (Action(..), Mode(..))
+import Model exposing (Action(..))
 import View
 import Html
 import Html.Lazy
@@ -12,12 +12,6 @@ import StartApp
 import Effects
 import Solver
 
--- Other inbound ports
-
-port codeFocused : Signal Bool
-port code: Signal (Maybe String)
-port z3: String -- path to z3-emscripten
-
 inputs : List (Signal Model.Action)
 inputs = 
   [ Signal.Extra.passiveMap2
@@ -25,9 +19,9 @@ inputs =
       Keyboard.arrows
       (Keyboard.isDown 18)
   , Keyboard.presses ~> InputKeypress
-  , codeFocused ~> InputCodeFocused
-  , code ~> InputCode
   ]
+
+port z3: String -- path to z3-emscripten
 
 app : StartApp.App Model.Model
 app =
@@ -49,16 +43,9 @@ main : Signal Html.Html
 main =
   app.html
 
-
-port focus : Signal String
+port focus : Signal Bool
 port focus =
-  let focusString model =
-    case model.mode of
-      Code -> "code"
-      Spreadsheet Nothing -> "sheet"
-      Spreadsheet (Just _) -> "cellInput"
-  in
-  app.model ~> focusString
+  app.model ~> Model.isEditing
 
 port tasks : Signal (Task.Task Effects.Never ())
 port tasks =

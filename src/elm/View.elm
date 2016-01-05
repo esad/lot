@@ -7,7 +7,7 @@ import Signal
 import Maybe
 
 import Helpers
-import Model exposing (Action(..), Mode(..))
+import Model exposing (Action(..))
 import Sheet
 import Addr
 
@@ -21,9 +21,7 @@ view address model =
     viewCell addr cell =
       let
         selected = addr == model.selection
-        editing = case model.mode of
-          Code -> Nothing
-          Spreadsheet m -> if selected then m else Nothing
+        editing = if selected then model.editing else Nothing
       in 
         case editing of
           Nothing ->
@@ -85,8 +83,5 @@ view address model =
           [ colHeader
           , body
           ]
-      , textarea
-          [ id "code" ]
-          [ text model.code ]
       ]
     

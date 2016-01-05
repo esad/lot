@@ -1,4 +1,4 @@
-module Model (Model, Action, Action(..), Mode(..), empty, update) where
+module Model (Model, Action, Action(..), empty, isEditing, update) where
 
 import Sheet exposing (Cell(..))
 import Addr exposing (Addr, Direction(..))
@@ -9,32 +9,28 @@ import Task
 import Effects
 import Solver
 
-type Mode
-  --            Nothing: spreadsheet in navigation mode
-  --            Just String: spreadsheet in edit mode with the current edit value
-  = Spreadsheet (Maybe String)
-  | Code 
-
 type alias Model = 
   { sheet : Sheet.Sheet
   , selection : Addr
-  , mode : Mode
-  , code : String
+  -- If Nothing, no cell is being edited. If Just String, then the string holds initial value
+  -- of the edit box (which can be empty string). Only currently selected cell can be edited.
+  , editing : Maybe String 
   }
 
 empty : Model
 empty =
   { sheet = Sheet.initialize 5 5
   , selection = Addr.fromColRow 0 0
-  , mode = Spreadsheet Nothing
-  , code = "-- Welcome to Lot"
+  , editing = Nothing
   }
+
+isEditing : Model -> Bool
+isEditing model =
+  model.editing /= Nothing
 
 type Action
   = InputArrows { x: Int, y: Int, alt: Bool }
   | InputKeypress Char.KeyCode
-  | InputCode (Maybe String)
-  | InputCodeFocused Bool
   ---
   | LoadSolver (Maybe Solver.Solver)
   ---
@@ -50,7 +46,9 @@ update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
   let
     action =
-      Debug.log "update" action
+      case action of 
+        LoadSolver _ -> action -- solver object can't be shown w/o blowing the stack
+        _ -> Debug.log "update" action 
     noFx model =
       (model, Effects.none)
     nop =
@@ -60,49 +58,21 @@ update action model =
   in
   case action of
     InputArrows a ->
-      case (model.mode, Addr.xy2dir a) of
-        (_, Nothing) ->
-          nop
-        (Code, _) ->
-          nop
-        (Spreadsheet _, Just dir) ->
+      case Addr.xy2dir a of
+        Just dir ->
           anotherActionFx (if a.alt then Insert dir else Move dir) model
+        Nothing ->
+          nop
     InputKeypress key ->
-      case (model.mode, key) of
+      case (isEditing model, key) of
         (_, 0) ->
           nop
-        (Code, 27) ->
-          -- Switch focus back to spreadsheet
-          noFx 
-            { model |
-              mode = Spreadsheet Nothing
-            }
-        (Code, _) ->
+        (True, _) ->
           nop
-        (Spreadsheet (Just _), _) ->
-          nop
-        (Spreadsheet Nothing, 8) ->
+        (False, 8) ->
           anotherActionFx Clear model
-        (Spreadsheet Nothing, 27) ->
-          -- Switch focus to code
-          noFx
-            { model |
-              mode = Code
-            }
-        (Spreadsheet Nothing, _) ->
+        (False, _) ->
           anotherActionFx (Edit (Just <| Char.fromCode key)) model
-    InputCodeFocused focus ->
-      noFx
-        { model |
-          mode = if focus then Code else Spreadsheet Nothing
-        }
-    InputCode Nothing ->
-      nop
-    InputCode (Just code) ->
-      noFx 
-        { model | 
-          code = code 
-        }
     ---
     LoadSolver solver ->
       nop
@@ -120,7 +90,7 @@ update action model =
     Commit addr str ->
       noFx
         { model |
-          mode = Spreadsheet Nothing,
+          editing = Nothing,
           sheet = Sheet.update addr (always (TextCell str)) model.sheet,
           selection =
             if addr == model.selection then
@@ -132,24 +102,23 @@ update action model =
     Cancel ->
       noFx 
         { model | 
-          mode = Spreadsheet Nothing
+          editing = Nothing
         }
     Edit char ->
       noFx
         { model | 
-          mode = 
+          editing = 
             Maybe.oneOf 
               [ char `andThen` (String.fromChar >> Just)
               , (Sheet.get model.selection model.sheet) `andThen` Sheet.cell2str
               , Just ""
               ]
-            |> Spreadsheet
-      }
+        }
     Move direction ->
       noFx
         { model |
           selection = Sheet.move model.selection direction model.sheet,
-          mode = Spreadsheet Nothing
+          editing = Nothing
         }
     Insert direction ->
       let

@@ -3,13 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <title>Lot</title>
-    <script type="text/javascript" src="codemirror/codemirror.js"></script>
-    <script type="text/javascript" src="codemirror/simple.js"></script>
     <script type="text/javascript" src="zem/zem.js"></script>
     <script type="text/javascript" src="zem/zem.parser.js"></script>
-    <script type="text/javascript" src="zem/codemirror.js"></script>
-    <link rel="stylesheet" href="codemirror/codemirror.css" type="text/css" />
-    <link rel="stylesheet" href="codemirror/vibrant-ink.css" type="text/css" />
     <link rel="stylesheet" href="app.css" type="text/css" />
   </head>
   <body>
@@ -17,40 +12,13 @@
     <script type="text/javascript" src="patches.js"></script>
     <script type="text/javascript">
       var app = Elm.fullscreen(Elm.App, {
-        codeFocused: false, 
-        code: null,
         z3: "/z3-emscripten/z3.js"
       });
 
-      // Init editor
-      var cm = CodeMirror.fromTextArea(document.getElementById('code'), {
-        theme: 'vibrant-ink',
-        mode: 'zem',
-        extraKeys: {
-          Esc: false // let app handle it
-        }
-      });
-
-      cm.on('focus', function() {
-        app.ports.codeFocused.send(true);
-      });
-
-      cm.on('blur', function() {
-        app.ports.codeFocused.send(false);
-        app.ports.code.send(cm.getValue());
-      });
-
       // Handle focus
-      app.ports.focus.subscribe(function(what) {
-        if (what == "code") {
-          cm.focus();
-        } else {
-          cm.getInputField().blur();
-        }
-
+      app.ports.focus.subscribe(function(state) {
         var getEl = function() { return document.querySelectorAll('.editing input')[0]; }
-      
-        if (what == "cellInput") {
+        if (state) {
           setTimeout(function() {
             var el = getEl();
             el.focus();
