@@ -9,13 +9,15 @@ import Maybe exposing (andThen)
 import Task
 import Effects
 import Solver
+import Constraint
 
 type alias Model = 
   { sheet : Sheet.Sheet
   , selection : Addr
   -- If Nothing, no cell is being edited. If Just String, then the string holds initial value
   -- of the edit box (which can be empty string). Only currently selected cell can be edited.
-  , editing : Maybe String 
+  , editing : Maybe String
+  , solver: Maybe Solver.Solver -- available when z3 solver loads successfully (see LoadSolver action)
   }
 
 empty : Model
@@ -23,6 +25,7 @@ empty =
   { sheet = Sheet.initialize 5 5
   , selection = Addr.fromColRow 0 0
   , editing = Nothing
+  , solver = Nothing
   }
 
 isEditing : Model -> Bool
@@ -34,6 +37,7 @@ type Action
   | InputKeypress Char.KeyCode
   ---
   | LoadSolver (Maybe Solver.Solver)
+  | Solve
   ---
   | Select Addr -- Direct selection of the cell at given address
   | Move Addr.Direction -- Keyboard movement in this relative direction
@@ -76,7 +80,23 @@ update action model =
           anotherActionFx (Edit (Just <| Char.fromCode key)) model
     ---
     LoadSolver solver ->
-      nop
+      noFx
+        { model |
+          solver = solver
+        }
+    Solve -> 
+      case model.solver of
+        Just solver ->  
+          case Solver.solve model.sheet solver of
+            Ok solution ->
+              noFx
+                { model |
+                  sheet = solution
+                }
+            Err error ->
+              nop
+        Nothing ->
+          let _ = Debug.log "No solver yet" in nop
     ---
     Clear ->
       noFx
@@ -89,10 +109,18 @@ update action model =
           selection = addr
         } 
     Commit addr str ->
-      noFx
+      -- Try parsing constraints
+      let (cell, effect) =
+        case Constraint.parse str of
+          Ok constraints ->
+            (ConstrainedCell { constraints = constraints, solution = Nothing }, anotherActionFx Solve)
+          Err _ ->
+            (TextCell str, noFx)
+      in
+      effect
         { model |
           editing = Nothing,
-          sheet = Sheet.update addr (always (TextCell str)) model.sheet,
+          sheet = Sheet.update addr (always cell) model.sheet,
           selection =
             if addr == model.selection then
               -- Enter key was pressed, advance selection by one
