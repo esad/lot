@@ -81,7 +81,8 @@ update action model =
         (False, 8) ->
           anotherActionFx Clear model
         (False, _) ->
-          anotherActionFx (Edit (Just <| Char.fromCode key)) model
+          -- Enter should be like double-click
+          anotherActionFx (Edit <| if key == 13 then Nothing else Just <| Char.fromCode key) model
     ---
     LoadSolver solver ->
       noFx
