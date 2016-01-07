@@ -12,7 +12,7 @@ type Rel = Eq | NotEq | Lt | LtEq | Gt | GtEq
 
 type Op = Add | Sub | Mul | Div
 
-type Expr = Const Int | Id Identifier | Calc Expr Op Expr 
+type Expr = Const Int | Id Identifier | Calc Op Expr Expr 
   
 type Constraint = Constraint Rel Expr
 
@@ -42,7 +42,7 @@ dependencies (Constraint rel expr) =
     case e of 
       Const _ -> []
       Id id -> [id]
-      Calc e1 _ e2 -> depExpr e1 ++ depExpr e2
+      Calc _ e1 e2 -> depExpr e1 ++ depExpr e2
   in
     depExpr expr
 
@@ -59,7 +59,7 @@ toSmtLibAssert identifier (Constraint rel exp) =
           toString c
         Id i ->
           Identifier.toString i
-        Calc e1 op e2 ->
+        Calc op e1 e2 ->
           sexp [opToString op, exprSexp e1, exprSexp e2]
   in
     sexp
@@ -107,10 +107,10 @@ identifier =
   (Id << Identifier.fromString) `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "cell identifier"
 
 expr : Parser Expr
-expr = rec <| \() -> (Calc `map` mulExpr `andMap` addOp `andMap` expr) `or` mulExpr
+expr = rec <| \() -> term `chainl` (Calc `map` addOp)
 
-mulExpr : Parser Expr
-mulExpr = rec <| \() -> (Calc `map` factor `andMap` mulOp `andMap` mulExpr) `or` factor
+term : Parser Expr
+term = rec <| \() -> factor `chainl` (Calc `map` mulOp)
 
 factor : Parser Expr
 factor = rec <| \() -> parens expr `or` constExpr `or` identifier |> tokenize
