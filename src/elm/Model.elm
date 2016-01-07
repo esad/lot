@@ -63,10 +63,14 @@ update action model =
   in
   case action of
     InputArrows a ->
-      case Addr.xy2dir a of
-        Just dir ->
+      case (Addr.xy2dir a, isEditing model) of
+        (Just Left, True) -> 
+          nop
+        (Just Right, True) ->
+          nop
+        (Just dir, _) ->
           anotherActionFx (if a.alt then Insert dir else Move dir) model
-        Nothing ->
+        (Nothing, _) ->
           nop
     InputKeypress key ->
       case (isEditing model, key) of
@@ -99,9 +103,15 @@ update action model =
           let _ = Debug.log "No solver yet" in nop
     ---
     Clear ->
-      noFx
+      let effect = case Sheet.get model.selection model.sheet of
+        -- If we clear a constrained cell, we need to reevaluate
+        Just (ConstrainedCell _) -> anotherActionFx Solve
+        -- otherwise not
+        _ -> noFx
+      in
+      effect
         { model |
-          sheet = Sheet.update model.selection (always (TextCell "")) model.sheet
+          sheet = Sheet.update model.selection (always EmptyCell) model.sheet
         }
     Select addr ->
       noFx 
@@ -113,7 +123,7 @@ update action model =
       let (cell, effect) =
         case Constraint.parse str of
           Ok constraints ->
-            (ConstrainedCell { constraints = constraints, solution = Nothing }, anotherActionFx Solve)
+            (ConstrainedCell { constraints = constraints, solution = Nothing, source = str }, anotherActionFx Solve)
           Err _ ->
             (TextCell str, noFx)
       in
@@ -139,7 +149,7 @@ update action model =
           editing = 
             Maybe.oneOf 
               [ char `andThen` (String.fromChar >> Just)
-              , (Sheet.get model.selection model.sheet) `andThen` Cell.toString
+              , (Sheet.get model.selection model.sheet) `andThen` Cell.editString
               , Just ""
               ]
         }

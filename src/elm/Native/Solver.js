@@ -69,12 +69,13 @@ Elm.Native.Solver.make = function(localRuntime) {
         var results = [];
         // concat the rest of stdout
         var solution = stdout.slice(1).join(' ');
+        console.log("Z3 solution:",solution);
         var re = /\(([^\(]+?) (.*?)\)/g;
         var match;
         // ..and scan it for (var value) pairs
         while (match = re.exec(solution)) {
           var name = match[1];
-          var value = parseInt(match[2]);
+          var value = parseInt(match[2].replace(/[\s\(]/g,''));
           results.push(Tuple2(name, value));
         }
         return Result.Ok(List.fromArray(results));

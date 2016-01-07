@@ -45,7 +45,7 @@ main =
 
 port focus : Signal Bool
 port focus =
-  app.model ~> Model.isEditing
+  app.model ~> Model.isEditing |> Signal.dropRepeats
 
 port tasks : Signal (Task.Task Effects.Never ())
 port tasks =

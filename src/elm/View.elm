@@ -5,6 +5,7 @@ import Html.Attributes exposing (classList, value, key, id)
 import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
 import Maybe
+import String
 
 import Helpers
 import Model exposing (Action(..))
@@ -50,7 +51,7 @@ view address model =
       let
         (component, identifier, tag) = case header of
           RowHeader -> (Addr.row, Addr.rowIdentifier, td)
-          ColHeader -> (Addr.col, Addr.colIdentifier, th)
+          ColHeader -> (Addr.col, Addr.colIdentifier >> String.toUpper, th)
         selected = (component model.selection == idx)
       in
         tag

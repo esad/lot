@@ -1,4 +1,6 @@
-module Constraint (Constraint, parse, toSmtLibAssert) where
+module Constraint (Constraint, parse, dependencies, toSmtLibAssert) where
+
+import Identifier exposing (Identifier)
 
 import Result
 import Combine exposing (..)
@@ -10,7 +12,7 @@ type Rel = Eq | NotEq | Lt | LtEq | Gt | GtEq
 
 type Op = Add | Sub | Mul | Div
 
-type Expr = Const Int | Var String | Calc Expr Op Expr 
+type Expr = Const Int | Id Identifier | Calc Expr Op Expr 
   
 type Constraint = Constraint Rel Expr
 
@@ -32,9 +34,21 @@ opToString op =
     Mul   -> "*"
     Div   -> "/"
 
+-- Returns a list of identifiers this constraint depends on
+
+dependencies : Constraint -> List Identifier
+dependencies (Constraint rel expr) =
+  let depExpr e =
+    case e of 
+      Const _ -> []
+      Id id -> [id]
+      Calc e1 _ e2 -> depExpr e1 ++ depExpr e2
+  in
+    depExpr expr
+
 --- Output
 
-toSmtLibAssert : String -> Constraint -> String
+toSmtLibAssert : Identifier -> Constraint -> String
 toSmtLibAssert identifier (Constraint rel exp) =
   let
     sexp xs =
@@ -43,8 +57,8 @@ toSmtLibAssert identifier (Constraint rel exp) =
       case e of 
         Const c ->
           toString c
-        Var v ->
-          v
+        Id i ->
+          Identifier.toString i
         Calc e1 op e2 ->
           sexp [opToString op, exprSexp e1, exprSexp e2]
   in
@@ -52,7 +66,7 @@ toSmtLibAssert identifier (Constraint rel exp) =
       [ "assert"
       , sexp
         [ relToString rel
-        , identifier
+        , Identifier.toString identifier
         , exprSexp exp
         ]
       ]
@@ -88,9 +102,9 @@ constExpr =
   map Const Combine.Num.int
   |> tokenize
 
-var : Parser Expr
-var = 
-  Var `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "cell identifier or label"
+identifier : Parser Expr
+identifier = 
+  (Id << Identifier.fromString) `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "cell identifier"
 
 expr : Parser Expr
 expr = rec <| \() -> (Calc `map` mulExpr `andMap` addOp `andMap` expr) `or` mulExpr
@@ -99,7 +113,7 @@ mulExpr : Parser Expr
 mulExpr = rec <| \() -> (Calc `map` factor `andMap` mulOp `andMap` mulExpr) `or` factor
 
 factor : Parser Expr
-factor = rec <| \() -> parens expr `or` constExpr `or` var |> tokenize
+factor = rec <| \() -> parens expr `or` constExpr `or` identifier |> tokenize
 
 constraint : Parser Constraint
 constraint =

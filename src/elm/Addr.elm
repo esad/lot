@@ -1,5 +1,7 @@
 module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier, Direction(..), xy2dir) where
 
+import Identifier
+
 import Array
 import Char
 import String
@@ -40,7 +42,7 @@ xy2dir a =
 
 alphabet : Array.Array Char
 alphabet = 
-  Array.initialize 26 (((+) 65) >> Char.fromCode)
+  Array.initialize 26 (((+) 97) >> Char.fromCode)
 
 colIdentifier : Int -> String
 colIdentifier col =
@@ -63,13 +65,12 @@ rowIdentifier : Int -> String
 rowIdentifier row =
   row + 1 |> toString 
 
-toIdentifier : Addr -> String
+toIdentifier : Addr -> Identifier.Identifier
 toIdentifier addr =
-  (col addr |> colIdentifier)
-  ++
-  (row addr |> rowIdentifier)
+  (col addr |> colIdentifier) ++ (row addr |> rowIdentifier)
+  |> Identifier.fromString
 
-fromIdentifier : String -> Maybe Addr
+fromIdentifier : Identifier.Identifier -> Maybe Addr
 fromIdentifier id =
   let
     fromBase b digits =
@@ -79,17 +80,17 @@ fromIdentifier id =
     parseCol id =
       id 
       |> String.toList
-      |> List.map (Char.toCode >> (flip (-) 65))
+      |> List.map (Char.toCode >> (flip (-) 97))
       |> fromBase 26
     parseRow id =
       case String.toInt id of
         Ok r -> Just (r - 1)
         _ -> Nothing
     re =
-      Regex.regex "^([A-Z]+)([1-9][0-9]*)"
+      Regex.regex "^([a-z]+)([1-9][0-9]*)"
     submatches =
       id 
-      |> String.toUpper
+      |> Identifier.toString
       |> Regex.find Regex.All re
       |> List.concatMap .submatches
       |> List.filterMap identity

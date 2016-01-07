@@ -1,4 +1,4 @@
-module Cell (Cell, Cell(..), toString) where
+module Cell (Cell, Cell(..), toString, editString) where
 
 import Constraint
 
@@ -8,6 +8,7 @@ type Cell
   | ConstrainedCell
     { solution : Maybe Int
     , constraints : List Constraint.Constraint
+    , source : String
     --, dependencies : List String -- list of cell identifiers this cell depends on
     }
 
@@ -22,3 +23,12 @@ toString cell =
       case solution of
         Nothing -> Just "..."
         Just i -> Just <| Basics.toString i
+
+editString : Cell -> Maybe String
+editString cell =
+  case cell of
+    ConstrainedCell {source} ->
+      Just source
+    _ ->
+      toString cell
+
