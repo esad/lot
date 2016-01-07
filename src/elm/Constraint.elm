@@ -64,11 +64,12 @@ toSmtLibAssert identifier (Constraint rel exp) =
   in
     sexp
       [ "assert"
-      , sexp
-        [ relToString rel
-        , Identifier.toString identifier
-        , exprSexp exp
-        ]
+      , case rel of 
+          NotEq ->
+            -- != must be transformed into (not (= ...))
+            sexp ["not", sexp [relToString Eq, Identifier.toString identifier, exprSexp exp]]
+          _ ->
+            sexp [relToString rel, Identifier.toString identifier, exprSexp exp]
       ]
 
 --- Parsing
