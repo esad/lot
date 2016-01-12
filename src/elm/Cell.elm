@@ -1,4 +1,6 @@
-module Cell (Cell, Cell(..), toString, editString) where
+module Cell (Cell, Cell(..), fromString, toString, editString) where
+
+import String
 
 import Constraint
 
@@ -11,6 +13,20 @@ type Cell
     , source : String
     --, dependencies : List String -- list of cell identifiers this cell depends on
     }
+
+fromString : String -> Cell
+fromString str =
+  case String.trim str |> String.isEmpty of
+    True ->
+      EmptyCell
+    False -> 
+      case Constraint.parse str of
+        Ok (x::xs as constraints) ->
+          ConstrainedCell { constraints = constraints, solution = Nothing, source = str }
+        Ok [] ->
+          TextCell str
+        Err _ ->
+          TextCell str
 
 toString : Cell -> Maybe String
 toString cell =

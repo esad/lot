@@ -121,12 +121,13 @@ update action model =
         } 
     Commit addr str ->
       -- Try parsing constraints
-      let (cell, effect) =
-        case Constraint.parse str of
-          Ok constraints ->
-            (ConstrainedCell { constraints = constraints, solution = Nothing, source = str }, anotherActionFx Solve)
-          Err _ ->
-            (TextCell str, noFx)
+      let
+        cell =
+          Cell.fromString str
+        effect =
+          case cell of
+            ConstrainedCell _ -> anotherActionFx Solve
+            _ -> noFx
       in
       effect
         { model |
