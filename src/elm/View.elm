@@ -1,7 +1,7 @@
 module View (view) where 
 
-import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, input, textarea)
-import Html.Attributes exposing (classList, value, key, id)
+import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, input, textarea, footer, main')
+import Html.Attributes exposing (class, classList, value, key, id)
 import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
 import Maybe
@@ -79,12 +79,19 @@ view address model =
       |> List.indexedMap viewRow
       |> tbody []
   in
-    div 
-      []
-      [ table
-          [] 
-          [ colHeader
-          , body
-          ]
+    div [ classList [("app", True)] ]
+      [ main' [] <|
+        case model.solver of
+          Nothing ->
+            [ div [ class "loader" ] [text "Loading solver..."] ]
+          Just (Err _) ->
+            [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
+          Just (Ok _) ->
+            [ 
+              table []
+                [ colHeader
+                , body
+                ]
+            ]
+      --, footer [] [text "Loading solver..."]
       ]
-    
