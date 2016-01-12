@@ -1,3 +1,5 @@
+$accent-color: #409AE4;
+
 %type {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
@@ -51,11 +53,12 @@ td {
   padding: 2px 2px;
 
   &.selected {
-    border: 1px double red;
+    position: relative;
+    border: 1px double $accent-color;
   }
 
   &.editing {
-    border-color: blue !important;
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.4);
   }
 
   &.value {
