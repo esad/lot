@@ -58,6 +58,10 @@ td {
     border-color: blue !important;
   }
 
+  &.value {
+    text-align: right;
+  }
+
   input {
     display: table-cell;
     width: 100%;

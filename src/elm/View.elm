@@ -10,7 +10,7 @@ import String
 import Helpers
 import Model exposing (Action(..))
 import Sheet
-import Cell
+import Cell exposing (Cell(..))
 import Addr
 
 type Header = RowHeader | ColHeader
@@ -22,6 +22,11 @@ view address model =
   let
     viewCell addr cell =
       let
+        css_classes =
+          case cell of
+            TextCell _ -> [("text", True)]
+            ConstrainedCell _ -> [("value", True)]
+            EmptyCell -> []
         selected = addr == model.selection
         editing = if selected then model.editing else Nothing
       in 
@@ -29,7 +34,7 @@ view address model =
           Nothing ->
             td
               [ key (toString addr)
-              , classList [("selected", selected)]
+              , classList <| ("selected", selected) :: css_classes
               , onDoubleClick address (Edit Nothing)
               , onClick address (Select addr)
               ]

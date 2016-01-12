@@ -54,7 +54,7 @@ solve sheet solver =
                   ConstrainedCell c ->
                     ConstrainedCell { c | solution = Just value }
                   _ ->
-                    TextCell (toString value)
+                    ConstrainedCell { solution = Just value, source = "", constraints = []} -- TODO: replace with "Derived cell"
               ) s
             Nothing ->
               Debug.log ("Unknown identifier " ++ id ++ " for ") s
