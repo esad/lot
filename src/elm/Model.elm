@@ -17,7 +17,7 @@ type alias Model =
   -- If Nothing, no cell is being edited. If Just String, then the string holds initial value
   -- of the edit box (which can be empty string). Only currently selected cell can be edited.
   , editing : Maybe String
-  , solver: Maybe Solver.Solver -- available when z3 solver loads successfully (see LoadSolver action)
+  , solver: Maybe (Result String Solver.Solver) -- available when z3 solver loads successfully (see LoadSolver action)
   }
 
 empty : Model
@@ -36,7 +36,7 @@ type Action
   = InputArrows { x: Int, y: Int, alt: Bool }
   | InputKeypress Char.KeyCode
   ---
-  | LoadSolver (Maybe Solver.Solver)
+  | LoadSolver (Result String Solver.Solver)
   | Solve
   ---
   | Select Addr -- Direct selection of the cell at given address
@@ -84,14 +84,14 @@ update action model =
           -- Enter should be like double-click
           anotherActionFx (Edit <| if key == 13 then Nothing else Just <| Char.fromCode key) model
     ---
-    LoadSolver solver ->
+    LoadSolver result ->
       noFx
         { model |
-          solver = solver
+          solver = Just result
         }
     Solve -> 
       case model.solver of
-        Just solver ->  
+        Just (Ok solver) ->  
           case Solver.solve model.sheet solver of
             Ok solution ->
               noFx
@@ -100,8 +100,8 @@ update action model =
                 }
             Err error ->
               nop
-        Nothing ->
-          let _ = Debug.log "No solver yet" in nop
+        _ ->
+          let _ = Debug.log "No solver available" in nop
     ---
     Clear ->
       let effect = case Sheet.get model.selection model.sheet of

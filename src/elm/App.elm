@@ -28,9 +28,8 @@ app =
   StartApp.start
     { init = 
         ( Model.empty
-        -- Start loading solver at start
-        , Solver.load z3 
-          |> Task.toMaybe
+        , Solver.load z3 -- Start loading solver at start
+          |> Task.toResult
           |> Task.map LoadSolver
           |> Effects.task
         )
