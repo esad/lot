@@ -4,14 +4,40 @@
   line-height: 16px;
 }
 
-html {
-  height: 100%;
-}
 body {
-  margin: 0;
-  height: 100%;
   @extend %type;
 }
+
+// Layout
+
+.loader {
+  margin: 10px;
+}
+
+.app {
+  position: absolute;
+  left: 0; right: 0; bottom: 0; top: 0;
+  display: flex;
+  flex-flow: column;
+
+  main {
+    display: block;
+    flex: 2 auto;
+    overflow: auto;
+  }
+
+  footer {
+    flex: 0 24px;
+    padding: 0 5px;
+    line-height: 24px;
+    //border-top: 1px solid #7a7a7a;
+    color: white;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+    font-size: 12px;
+    background: #585858;
+  }
+}
+
 
 table {
   border-collapse: collapse;
@@ -23,6 +49,7 @@ td {
   width: 80px;
   overflow-x: hidden;
   padding: 2px 2px;
+
   &.selected {
     border: 1px double red;
   }
@@ -43,22 +70,24 @@ td {
 
   &:first-child {
     border: none;
-    width: 20px;
+    width: auto;
+    padding: 0 2px;
+    min-width: 20px;
     text-align: center;
     &.selected {
       font-weight: bold;
     }
   }
+
+  &:not(:first-child) {
+    min-width: 50px;
+  }
 }
 
 th {
   font-weight: normal;
+  padding: 2px 0;
   &.selected {
     font-weight: bold;
   }
-}
-
-body > div {
-  overflow: auto;
-  height: 100%;
 }
