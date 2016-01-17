@@ -1,5 +1,7 @@
 $accent-color: #409AE4;
-$gray-0-color: #bbb;
+$gray-0-color: #999;
+$gray-1-color: #c0c0c0;
+$black-color: #000;
 
 %type {
   font-family: Helvetica, Arial, sans-serif;
@@ -64,10 +66,15 @@ td {
 
   &.value {
     text-align: right;
+    color: $gray-0-color;
   }
 
+  &.const {
+    color: $black-color;
+  }
+  
   &.derived {
-    color: $gray-0-color;
+    color: $gray-1-color;
   }
 
   input {

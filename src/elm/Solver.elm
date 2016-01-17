@@ -6,10 +6,8 @@ import Sheet
 import Addr
 import Cell exposing (Cell(..))
 import Constraint
-import Identifier
 import String
-import Set
-import Maybe exposing (andThen)
+import Set exposing (union)
 import Dict
 
 type Solver = Solver
@@ -25,23 +23,17 @@ solve sheet solver =
       Sheet.fold 
         (\(addr, cell) (ids, asserts) ->
           case cell of
-            Cell.ConstrainedCell {constraints} ->
+            Cell.ConstrainedCell {constraints, dependencies} ->
               let
                 cellId = Addr.toIdentifier addr
                 cellAsserts = List.map (Constraint.toSmtLibAssert cellId) constraints
-                cellDeps = List.concatMap (Constraint.dependencies) constraints
               in
-                (cellId :: cellDeps ++ ids, cellAsserts ++ asserts)
+                (Set.singleton cellId `union` dependencies `union` ids, cellAsserts ++ asserts)
             _ ->
               (ids, asserts)        
         )
-        ([],[])
+        (Set.empty,[])
         sheet
-    uniqueIds = 
-      ids 
-      |> List.map Identifier.toString
-      |> Set.fromList 
-      |> Set.toList
     smt2 =
       String.join "\n" asserts
     result =
@@ -49,7 +41,7 @@ solve sheet solver =
         [] -> -- When there are no assertions, do not call the solver
           Ok []
         _ ->
-          Native.Solver.solve solver smt2 uniqueIds
+          Native.Solver.solve solver smt2 (ids |> Set.toList)
   in
     case result of
       -- Ok Dict String Int
@@ -60,7 +52,7 @@ solve sheet solver =
         sheet
         |> Sheet.map (\addr cell ->
           let 
-            key = addr |> Addr.toIdentifier |> Identifier.toString
+            key = addr |> Addr.toIdentifier
           in
           case (cell, Dict.get key solutionsDict) of
             (ConstrainedCell c, value) ->

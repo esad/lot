@@ -1,7 +1,7 @@
 module Cell (Cell, Cell(..), fromString, toString, editString) where
 
 import String
-
+import Set
 import Constraint
 
 type Cell
@@ -11,8 +11,10 @@ type Cell
   | ConstrainedCell
     { solution : Maybe Int
     , constraints : List Constraint.Constraint
+     -- precalculated set of cell identifiers this cell's constraints are referring to, possibly empty
+    , dependencies : Set.Set String
+    , hasConst: Bool
     , source : String
-    --, dependencies : List String -- list of cell identifiers this cell depends on
     }
 
 fromString : String -> Cell
@@ -23,7 +25,13 @@ fromString str =
     False -> 
       case Constraint.parse str of
         Ok (x::xs as constraints) ->
-          ConstrainedCell { constraints = constraints, solution = Nothing, source = str }
+          ConstrainedCell 
+            { solution = Nothing
+            , constraints = constraints
+            , dependencies = List.foldl (\c ds -> Constraint.dependencies c `Set.union` ds) Set.empty constraints
+            , hasConst = List.any Constraint.isConst constraints
+            , source = str
+            }
         Ok [] ->
           TextCell str
         Err _ ->

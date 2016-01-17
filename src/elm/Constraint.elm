@@ -1,18 +1,17 @@
-module Constraint (Constraint, parse, dependencies, toSmtLibAssert) where
-
-import Identifier exposing (Identifier)
+module Constraint (Constraint, parse, dependencies, toSmtLibAssert, isConst) where
 
 import Result
 import Combine exposing (..)
 import Combine.Infix exposing ((<*), (<?>))
 import Combine.Num
 import String
+import Set exposing (union)
 
 type Rel = Eq | NotEq | Lt | LtEq | Gt | GtEq 
 
 type Op = Add | Sub | Mul | Div
 
-type Expr = Const Int | Id Identifier | Calc Op Expr Expr 
+type Expr = Const Int | Id String | Calc Op Expr Expr 
   
 type Constraint = Constraint Rel Expr
 
@@ -34,21 +33,29 @@ opToString op =
     Mul   -> "*"
     Div   -> "/"
 
--- Returns a list of identifiers this constraint depends on
+-- Returns true if constraint relational operator is "=" and it has no deps
+isConst : Constraint -> Bool
+isConst c =
+  case c of
+    Constraint Eq _ ->
+      c |> dependencies |> Set.isEmpty 
+    _ ->
+      False
 
-dependencies : Constraint -> List Identifier
+-- Returns a set of identifiers this constraint depends on
+dependencies : Constraint -> Set.Set String
 dependencies (Constraint rel expr) =
   let depExpr e =
     case e of 
-      Const _ -> []
-      Id id -> [id]
-      Calc _ e1 e2 -> depExpr e1 ++ depExpr e2
+      Const _ -> Set.empty
+      Id id -> Set.singleton id
+      Calc _ e1 e2 -> depExpr e1 `union` depExpr e2
   in
     depExpr expr
 
 --- Output
 
-toSmtLibAssert : Identifier -> Constraint -> String
+toSmtLibAssert : String -> Constraint -> String
 toSmtLibAssert identifier (Constraint rel exp) =
   let
     sexp xs =
@@ -58,7 +65,7 @@ toSmtLibAssert identifier (Constraint rel exp) =
         Const c ->
           toString c
         Id i ->
-          Identifier.toString i
+          i
         Calc op e1 e2 ->
           sexp [opToString op, exprSexp e1, exprSexp e2]
   in
@@ -67,9 +74,9 @@ toSmtLibAssert identifier (Constraint rel exp) =
       , case rel of 
           NotEq ->
             -- != must be transformed into (not (= ...))
-            sexp ["not", sexp [relToString Eq, Identifier.toString identifier, exprSexp exp]]
+            sexp ["not", sexp [relToString Eq, identifier, exprSexp exp]]
           _ ->
-            sexp [relToString rel, Identifier.toString identifier, exprSexp exp]
+            sexp [relToString rel, identifier, exprSexp exp]
       ]
 
 --- Parsing
@@ -105,7 +112,7 @@ constExpr =
 
 identifier : Parser Expr
 identifier = 
-  (Id << Identifier.fromString) `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "cell identifier"
+  Id `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "cell identifier"
 
 expr : Parser Expr
 expr = rec <| \() -> term `chainl` (Calc `map` addOp)

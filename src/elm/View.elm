@@ -25,9 +25,9 @@ view address model =
         css_classes =
           case cell of
             TextCell _ -> [("text", True)]
-            ConstrainedCell _ -> [("value", True)]
+            ConstrainedCell {hasConst} -> [("value", True), ("const", hasConst), ("constrained", True)]
             EmptyCell -> []
-            DerivedCell _ -> [("value", True), ("derived" ,True)]
+            DerivedCell _ -> [("value", True), ("derived", True)]
         selected = addr == model.selection
         editing = if selected then model.editing else Nothing
       in 

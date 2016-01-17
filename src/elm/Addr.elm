@@ -1,7 +1,5 @@
 module Addr (Addr, row, col, fromColRow, add, toIdentifier, fromIdentifier, rowIdentifier, colIdentifier, Direction(..), xy2dir) where
 
-import Identifier
-
 import Array
 import Char
 import String
@@ -65,12 +63,12 @@ rowIdentifier : Int -> String
 rowIdentifier row =
   row + 1 |> toString 
 
-toIdentifier : Addr -> Identifier.Identifier
+toIdentifier : Addr -> String
 toIdentifier addr =
   (col addr |> colIdentifier) ++ (row addr |> rowIdentifier)
-  |> Identifier.fromString
+  |> String.toLower
 
-fromIdentifier : Identifier.Identifier -> Maybe Addr
+fromIdentifier : String -> Maybe Addr
 fromIdentifier id =
   let
     fromBase b digits =
@@ -90,7 +88,7 @@ fromIdentifier id =
       Regex.regex "^([a-z]+)([1-9][0-9]*)"
     submatches =
       id 
-      |> Identifier.toString
+      |> String.toLower
       |> Regex.find Regex.All re
       |> List.concatMap .submatches
       |> List.filterMap identity
