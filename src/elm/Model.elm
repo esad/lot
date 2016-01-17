@@ -104,16 +104,19 @@ update action model =
           let _ = Debug.log "No solver available" in nop
     ---
     Clear ->
-      let effect = case Sheet.get model.selection model.sheet of
-        -- If we clear a constrained cell, we need to reevaluate
-        Just (ConstrainedCell _) -> anotherActionFx Solve
-        -- otherwise not
-        _ -> noFx
+      let
+        clearSheet = Sheet.update model.selection (always EmptyCell) model.sheet
       in
-      effect
-        { model |
-          sheet = Sheet.update model.selection (always EmptyCell) model.sheet
-        }
+      case Sheet.get model.selection model.sheet of
+        Just (DerivedCell _) ->
+          -- Do not allow clearing derived cells
+          nop
+        Just (ConstrainedCell _) ->
+          -- If we clear a constrained cell, we need to reevaluate
+          anotherActionFx Solve { model | sheet = clearSheet }
+        _ ->
+          -- otherwise, clear the cell but don't reevaluate
+          noFx { model | sheet = clearSheet }
     Select addr ->
       noFx 
         { model | 
