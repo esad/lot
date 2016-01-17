@@ -27,6 +27,7 @@ view address model =
             TextCell _ -> [("text", True)]
             ConstrainedCell _ -> [("value", True)]
             EmptyCell -> []
+            DerivedCell _ -> [("value", True), ("derived" ,True)]
         selected = addr == model.selection
         editing = if selected then model.editing else Nothing
       in 

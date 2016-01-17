@@ -9,6 +9,8 @@ import Constraint
 import Identifier
 import String
 import Set
+import Maybe exposing (andThen)
+import Dict
 
 type Solver = Solver
 
@@ -42,28 +44,37 @@ solve sheet solver =
       |> Set.toList
     smt2 =
       String.join "\n" asserts
+    result =
+      case asserts of
+        [] -> -- When there are no assertions, do not call the solver
+          Ok []
+        _ ->
+          Native.Solver.solve solver smt2 uniqueIds
   in
-    case Native.Solver.solve solver smt2 uniqueIds of
+    case result of
+      -- Ok Dict String Int
       Ok solutions ->
-        List.foldl (\(id,value) s -> 
-          let _ = Debug.log ("id" ++ id ++ " for ") value  in
-          case Addr.fromIdentifier <| Identifier.fromString id of
-            Just a -> 
-              Sheet.update a (\cell ->
-                case cell of 
-                  ConstrainedCell c ->
-                    ConstrainedCell { c | solution = Just value }
-                  _ ->
-                    ConstrainedCell { solution = Just value, source = "", constraints = []} -- TODO: replace with "Derived cell"
-              ) s
-            Nothing ->
-              Debug.log ("Unknown identifier " ++ id ++ " for ") s
-        ) sheet solutions
+        let
+          solutionsDict = Dict.fromList solutions
+        in
+        sheet
+        |> Sheet.map (\addr cell ->
+          let 
+            key = addr |> Addr.toIdentifier |> Identifier.toString
+          in
+          case (cell, Dict.get key solutionsDict) of
+            (ConstrainedCell c, value) ->
+              ConstrainedCell { c | solution = value } -- TODO: catch nothing as "no solution"
+            (DerivedCell _, Nothing) ->
+              EmptyCell
+            (_, Just i) ->
+              DerivedCell i
+            (_, Nothing) ->
+              cell
+        )
         |> Debug.log "Solved to:"
         |> Ok
       Err err as error ->
         let _ = Debug.log ("Error solving "++err) sheet
         in Err err
-
-
     

@@ -1,4 +1,5 @@
 $accent-color: #409AE4;
+$gray-0-color: #bbb;
 
 %type {
   font-family: Helvetica, Arial, sans-serif;
@@ -63,6 +64,10 @@ td {
 
   &.value {
     text-align: right;
+  }
+
+  &.derived {
+    color: $gray-0-color;
   }
 
   input {

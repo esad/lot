@@ -1,4 +1,4 @@
-module Sheet (Sheet, initialize, get, fold, update, toList, move, insertRow, insertCol) where
+module Sheet (Sheet, initialize, get, fold, map, update, toList, move, insertRow, insertCol) where
 
 import Cell exposing (Cell, Cell(..))
 import Addr exposing (Addr, Direction(..))
@@ -40,6 +40,15 @@ fold f init sheet =
   |> List.indexedMap (\row cells -> List.indexedMap (\col cell -> (Addr.fromColRow col row, cell)) cells)
   |> List.concat -- List (Addr, Cell)
   |> List.foldl f init
+
+map : (Addr -> Cell -> Cell) -> Sheet -> Sheet
+map f sheet =
+  { sheet
+    | cells = 
+      Matrix.mapWithLocation (\loc cell ->
+        f (Addr.fromColRow (Matrix.col loc) (Matrix.row loc)) cell
+      ) sheet.cells
+  }
 
 update : Addr -> (Cell -> Cell) -> Sheet -> Sheet
 update addr f sheet =

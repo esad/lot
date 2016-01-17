@@ -7,6 +7,7 @@ import Constraint
 type Cell
   = EmptyCell
   | TextCell String
+  | DerivedCell Int -- a cell that was constrained to this value by another cell (or a global constraint)
   | ConstrainedCell
     { solution : Maybe Int
     , constraints : List Constraint.Constraint
@@ -35,6 +36,8 @@ toString cell =
       Nothing
     TextCell text ->
       Just text
+    DerivedCell i ->
+      Just <| Basics.toString i
     ConstrainedCell {solution} ->
       case solution of
         Nothing -> Just "..."
