@@ -7,9 +7,9 @@ import Constraint
 type Cell
   = EmptyCell
   | TextCell String
-  | DerivedCell Int -- a cell that was constrained to this value by another cell (or a global constraint)
+  | DerivedCell Float -- a cell that was constrained to this value by another cell (or a global constraint)
   | ConstrainedCell
-    { solution : Maybe Int
+    { solution : Maybe Float
     , constraints : List Constraint.Constraint
      -- precalculated set of cell identifiers this cell's constraints are referring to, possibly empty
     , dependencies : Set.Set String

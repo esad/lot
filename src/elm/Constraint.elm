@@ -11,7 +11,7 @@ type Rel = Eq | NotEq | Lt | LtEq | Gt | GtEq
 
 type Op = Add | Sub | Mul | Div
 
-type Expr = Const Int | Id String | Calc Op Expr Expr 
+type Expr = Const Float | Id String | Calc Op Expr Expr 
   
 type Constraint = Constraint Rel Expr
 
@@ -107,7 +107,11 @@ addOp =
 
 constExpr : Parser Expr
 constExpr = 
-  map Const Combine.Num.int
+  let
+    float = map Const Combine.Num.float
+    int = map (Const << toFloat) Combine.Num.int
+  in
+  float `or` int
   |> tokenize
 
 identifier : Parser Expr

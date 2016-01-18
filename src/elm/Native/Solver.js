@@ -50,7 +50,7 @@ Elm.Native.Solver.make = function(localRuntime) {
 
       var stdout = [];
       var stderr = [];
-      var before = "(push)\n" + vars.map(function(name) { return "(declare-const " + name + " Int)"; }).join("\n") + "\n";
+      var before = "(push)\n(set-option :pp-decimal true)\n" + vars.map(function(name) { return "(declare-const " + name + " Real)"; }).join("\n") + "\n";
       var after = "(check-sat)\n(get-value ("+vars.join(" ")+"))\n(pop)";
       var program = before + program + after;
       console.log("SMT:", program);
@@ -75,7 +75,7 @@ Elm.Native.Solver.make = function(localRuntime) {
         // ..and scan it for (var value) pairs
         while (match = re.exec(solution)) {
           var name = match[1];
-          var value = parseInt(match[2].replace(/[\s\(]/g,''));
+          var value = parseFloat(match[2].replace(/[\s\(]/g,''));
           results.push(Tuple2(name, value));
         }
         return Result.Ok(List.fromArray(results));
