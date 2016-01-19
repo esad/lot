@@ -9,7 +9,8 @@ import Maybe exposing (andThen)
 import Task
 import Effects
 import Solver
-import Constraint
+--import Constraint
+import Tableau
 
 type alias Model = 
   { sheet : Sheet.Sheet
@@ -17,6 +18,7 @@ type alias Model =
   -- If Nothing, no cell is being edited. If Just String, then the string holds initial value
   -- of the edit box (which can be empty string). Only currently selected cell can be edited.
   , editing : Maybe String
+  , tableau: Tableau.Tableau
   , solver: Maybe (Result String Solver.Solver) -- available when z3 solver loads successfully (see LoadSolver action)
   }
 
@@ -25,6 +27,7 @@ empty =
   { sheet = Sheet.initialize 5 5
   , selection = Addr.fromColRow 0 0
   , editing = Nothing
+  , tableau = Tableau.empty
   , solver = Nothing
   }
 
@@ -92,7 +95,7 @@ update action model =
     Solve -> 
       case model.solver of
         Just (Ok solver) ->  
-          case Solver.solve model.sheet solver of
+          case Solver.solve model.sheet model.tableau solver of
             Ok solution ->
               noFx
                 { model |
@@ -108,12 +111,9 @@ update action model =
         clearSheet = Sheet.update model.selection (always EmptyCell) model.sheet
       in
       case Sheet.get model.selection model.sheet of
-        Just (DerivedCell _) ->
-          -- Do not allow clearing derived cells
+        Just (ResultCell _) ->
+          -- Do not allow clearing result cells
           nop
-        Just (ConstrainedCell _) ->
-          -- If we clear a constrained cell, we need to reevaluate
-          anotherActionFx Solve { model | sheet = clearSheet }
         _ ->
           -- otherwise, clear the cell but don't reevaluate
           noFx { model | sheet = clearSheet }
@@ -123,25 +123,47 @@ update action model =
           selection = addr
         } 
     Commit addr str ->
-      -- Try parsing constraints
       let
-        cell =
-          Cell.fromString str
-        effect =
-          case cell of
-            ConstrainedCell _ -> anotherActionFx Solve
-            _ -> noFx
+        cell = 
+          Sheet.get addr model.sheet
+        id = 
+          Addr.toIdentifier addr
+        (newCell, newTableau) =
+          case String.trim str |> String.isEmpty of
+            True ->
+              (EmptyCell, [])
+            False ->
+              case Tableau.parse (Just id) str of
+                Err _ ->
+                  (TextCell str, [])
+                Ok t ->
+                  (ResultCell Nothing, t)
+        reevaluate = 
+          case (cell, newCell) of
+            (Just (ResultCell _), _) -> True
+            (_ , ResultCell _) -> True
+            _ -> False
       in
-      effect
-        { model |
-          editing = Nothing,
-          sheet = Sheet.update addr (always cell) model.sheet,
-          selection =
-            if addr == model.selection then
-              -- Enter key was pressed, advance selection by one
-              Sheet.move model.selection Down model.sheet
-            else
-              model.selection
+        (if reevaluate then anotherActionFx Solve else noFx)
+        { model
+          | editing = Nothing
+          , sheet = Sheet.update addr (always newCell) model.sheet
+          , selection =
+              if addr == model.selection then
+                -- Enter key was pressed, advance selection by one
+                Sheet.move model.selection Down model.sheet
+              else
+                model.selection
+          , tableau =
+              if reevaluate then
+                model.tableau 
+                |> Debug.log "T1" 
+                |> Tableau.dropCell id
+                |> Debug.log "T2"
+                |> Tableau.append newTableau
+                |> Debug.log "NEW"
+              else
+                model.tableau
         }
     Cancel ->
       noFx 
@@ -149,13 +171,21 @@ update action model =
           editing = Nothing
         }
     Edit char ->
+      let
+        id = Addr.toIdentifier model.selection
+      in
       noFx
         { model | 
           editing = 
             Maybe.oneOf 
               [ char `andThen` (String.fromChar >> Just)
-              , (Sheet.get model.selection model.sheet) `andThen` Cell.editString
-              , Just ""
+              , (Sheet.get model.selection model.sheet) `andThen` (\cell ->
+                case cell of 
+                  TextCell t -> Just t
+                  ResultCell _ -> Just <| Tableau.source id model.tableau
+                  _ -> Just ""
+              )
+              , Just "?"
               ]
         }
     Move direction ->

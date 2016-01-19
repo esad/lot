@@ -1,42 +1,13 @@
-module Cell (Cell, Cell(..), fromString, toString, editString) where
+module Cell (Cell, Cell(..), toString) where
 
 import String
-import Set
-import Constraint
+import Maybe
 
 type Cell
   = EmptyCell
   | TextCell String
-  | DerivedCell Float -- a cell that was constrained to this value by another cell (or a global constraint)
-  | ConstrainedCell
-    { solution : Maybe Float
-    , constraints : List Constraint.Constraint
-     -- precalculated set of cell identifiers this cell's constraints are referring to, possibly empty
-    , dependencies : Set.Set String
-    , hasConst: Bool
-    , source : String
-    }
-
-fromString : String -> Cell
-fromString str =
-  case String.trim str |> String.isEmpty of
-    True ->
-      EmptyCell
-    False -> 
-      case Constraint.parse str of
-        Ok (x::xs as constraints) ->
-          ConstrainedCell 
-            { solution = Nothing
-            , constraints = constraints
-            , dependencies = List.foldl (\c ds -> Constraint.dependencies c `Set.union` ds) Set.empty constraints
-            , hasConst = List.any Constraint.isConst constraints
-            , source = str
-            }
-        Ok [] ->
-          TextCell str
-        Err _ ->
-          TextCell str
-
+  | ResultCell (Maybe Float)
+  
 toString : Cell -> Maybe String
 toString cell =
   case cell of
@@ -44,18 +15,16 @@ toString cell =
       Nothing
     TextCell text ->
       Just text
-    DerivedCell i ->
+    ResultCell (Just i) ->
       Just <| Basics.toString i
-    ConstrainedCell {solution} ->
-      case solution of
-        Nothing -> Just "..."
-        Just i -> Just <| Basics.toString i
-
-editString : Cell -> Maybe String
-editString cell =
-  case cell of
-    ConstrainedCell {source} ->
-      Just source
-    _ ->
-      toString cell
+    ResultCell Nothing ->
+      Just "..."
+    
+--editString : Cell -> Maybe String
+--editString cell =
+--  case cell of
+--    ConstrainedCell {source} ->
+--      Just source
+--    _ ->
+--      toString cell
 

@@ -1,4 +1,4 @@
-module Constraint (Constraint, parse, dependencies, toSmtLibAssert, isConst) where
+module Constraint (Constraint, parse, toSmtAssert, identifiers, belongsToCell) where
 
 import Result
 import Combine exposing (..)
@@ -13,7 +13,7 @@ type Op = Add | Sub | Mul | Div
 
 type Expr = Const Float | Id String | Calc Op Expr Expr 
   
-type Constraint = Constraint Rel Expr
+type Constraint = Constraint Expr Rel Expr
 
 relToString : Rel -> String
 relToString rel =
@@ -33,30 +33,30 @@ opToString op =
     Mul   -> "*"
     Div   -> "/"
 
--- Returns true if constraint relational operator is "=" and it has no deps
-isConst : Constraint -> Bool
-isConst c =
-  case c of
-    Constraint Eq _ ->
-      c |> dependencies |> Set.isEmpty 
-    _ ->
-      False
+---- Returns true if constraint relational operator is "=" and it has no deps
+--isConst : Constraint -> Bool
+--isConst c =
+--  case c of
+--    Constraint Eq _ ->
+--      c |> dependencies |> Set.isEmpty 
+--    _ ->
+--      False
 
--- Returns a set of identifiers this constraint depends on
-dependencies : Constraint -> Set.Set String
-dependencies (Constraint rel expr) =
-  let depExpr e =
-    case e of 
-      Const _ -> Set.empty
-      Id id -> Set.singleton id
-      Calc _ e1 e2 -> depExpr e1 `union` depExpr e2
-  in
-    depExpr expr
+---- Returns a set of identifiers this constraint depends on
+--dependencies : Constraint -> Set.Set String
+--dependencies (Constraint rel expr) =
+--  let depExpr e =
+--    case e of 
+--      Const _ -> Set.empty
+--      Id id -> Set.singleton id
+--      Calc _ e1 e2 -> depExpr e1 `union` depExpr e2
+--  in
+--    depExpr expr
 
 --- Output
 
-toSmtLibAssert : String -> Constraint -> String
-toSmtLibAssert identifier (Constraint rel exp) =
+toSmtAssert : Constraint -> String
+toSmtAssert (Constraint e1 rel e2) =
   let
     sexp xs =
       "(" ++ (String.join " " xs) ++ ")"
@@ -74,10 +74,28 @@ toSmtLibAssert identifier (Constraint rel exp) =
       , case rel of 
           NotEq ->
             -- != must be transformed into (not (= ...))
-            sexp ["not", sexp [relToString Eq, identifier, exprSexp exp]]
+            sexp ["not", sexp [relToString Eq, exprSexp e1, exprSexp e2]]
           _ ->
-            sexp [relToString rel, identifier, exprSexp exp]
+            sexp [relToString rel, exprSexp e1, exprSexp e2]
       ]
+
+identifiers : Constraint -> Set.Set String
+identifiers (Constraint e1 rel e2) =
+  let
+    exprIdentifiers e =
+      case e of 
+        Const _ -> Set.empty
+        Id i -> Set.singleton i
+        Calc op e1 e2 -> exprIdentifiers e1 `union` exprIdentifiers e2
+  in
+    exprIdentifiers e1 `union` exprIdentifiers e2
+        
+-- Returns True if the constraint is defined for the cell with given identifier
+belongsToCell : String -> Constraint -> Bool
+belongsToCell id (Constraint e1 _ _) =
+  case e1 of
+    Id id' -> id == id'
+    _ -> False
 
 --- Parsing
 
@@ -116,7 +134,7 @@ constExpr =
 
 identifier : Parser Expr
 identifier = 
-  Id `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "cell identifier"
+  Id `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "expected a cell identifier"
 
 expr : Parser Expr
 expr = rec <| \() -> term `chainl` (Calc `map` addOp)
@@ -127,16 +145,27 @@ term = rec <| \() -> factor `chainl` (Calc `map` mulOp)
 factor : Parser Expr
 factor = rec <| \() -> parens expr `or` constExpr `or` identifier |> tokenize
 
+-- We use this parser when parsing constraints type in the context of a cell.
+-- The left part of the constraint is then set to (Id cellIdentifier).
+cellConstraint : String -> Parser Constraint
+cellConstraint id =
+  Constraint (Id id) Eq `map` constExpr `or` -- "300" -> "= 300"
+  ((Constraint (Id id)) `map` (tokenize rel) `andMap` expr) -- regular constraint
+
+-- Otherwise, we use this global constraint parser where left side can be any expression:
 constraint : Parser Constraint
 constraint =
-  Constraint Eq `map` constExpr `or` -- "300" -> "= 300"
-  (Constraint `map` (tokenize rel) `andMap` expr) -- regular constraint
+  Constraint `map` expr `andMap` (tokenize rel) `andMap` expr
 
-constraints : Parser (List Constraint)
-constraints =
-  sepBy (string ";") constraint 
-
-parse : String -> Result (List String) (List Constraint)
-parse str =
-  Combine.parse (constraints <* end) str
+-- Parses a constraint for cell (Just String) or global (Nothing)
+parse : Maybe String -> String -> Result (List String) Constraint
+parse context str =
+  let parser =
+    case context of
+      Nothing ->
+        constraint
+      Just id ->
+        cellConstraint id
+  in
+  Combine.parse (parser <* end) str
   |> fst
