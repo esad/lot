@@ -19,12 +19,3 @@ toString cell =
       Just <| Basics.toString i
     ResultCell Nothing ->
       Just "..."
-    
---editString : Cell -> Maybe String
---editString cell =
---  case cell of
---    ConstrainedCell {source} ->
---      Just source
---    _ ->
---      toString cell
-

@@ -25,7 +25,6 @@ view address model =
         css_classes =
           case cell of
             TextCell _ -> [("text", True)]
-            --ConstrainedCell {hasConst} -> [("value", True), ("const", hasConst), ("constrained", True)]
             EmptyCell -> []
             ResultCell _ -> [("value", True)]
         selected = addr == model.selection

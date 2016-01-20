@@ -20,13 +20,13 @@ solve sheet tableau solver =
   let
     result =
       case Tableau.toSmt tableau of
-        Nothing -> -- When there are no  no assertions, do not call the solver
+        Nothing -> -- When there are no assertions, do not call the solver
           Ok []
         Just (program, ids) ->
           Native.Solver.solve solver program ids
   in
     case result of
-      -- Ok Dict String Int
+      -- Ok Dict String Float
       Ok solutions ->
         let
           solutionsDict = Dict.fromList solutions

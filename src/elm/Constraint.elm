@@ -35,28 +35,6 @@ opToString op =
     Mul   -> "*"
     Div   -> "/"
 
----- Returns true if constraint relational operator is "=" and it has no deps
---isConst : Constraint -> Bool
---isConst c =
---  case c of
---    Constraint Eq _ ->
---      c |> dependencies |> Set.isEmpty 
---    _ ->
---      False
-
----- Returns a set of identifiers this constraint depends on
---dependencies : Constraint -> Set.Set String
---dependencies (Constraint rel expr) =
---  let depExpr e =
---    case e of 
---      Const _ -> Set.empty
---      Id id -> Set.singleton id
---      Calc _ e1 e2 -> depExpr e1 `union` depExpr e2
---  in
---    depExpr expr
-
---- Output
-
 toSmtAssert : Constraint -> String
 toSmtAssert (Constraint e1 rel e2) =
   let
