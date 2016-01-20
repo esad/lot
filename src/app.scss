@@ -66,16 +66,15 @@ td {
 
   &.value {
     text-align: right;
-    color: $gray-0-color;
   }
 
-  &.const {
-    color: $black-color;
-  }
+  // &.const {
+  //   color: $black-color;
+  // }
   
-  &.derived {
-    color: $gray-1-color;
-  }
+  // &.derived {
+  //   color: $gray-1-color;
+  // }
 
   input {
     display: table-cell;
