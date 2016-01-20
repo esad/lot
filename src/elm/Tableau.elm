@@ -8,7 +8,6 @@ import Constraint exposing (Constraint, Context(..))
 
 type alias Tableau = 
   List (String {- source text -}, Constraint)
-  
 
 empty : Tableau
 empty =

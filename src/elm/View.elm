@@ -1,6 +1,6 @@
 module View (view) where 
 
-import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, input, textarea, footer, main')
+import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, input, textarea, footer, main', ul, li)
 import Html.Attributes exposing (class, classList, value, key, id)
 import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
@@ -11,6 +11,7 @@ import Helpers
 import Model exposing (Action(..))
 import Sheet
 import Cell exposing (Cell(..))
+import Constraint exposing (Context(..))
 import Addr
 
 type Header = RowHeader | ColHeader
@@ -20,6 +21,14 @@ nbsp = "\xa0"
 view : Signal.Address Action -> Model.Model -> Html
 view address model =
   let
+    viewTableau t =
+      let
+        globalConstraints =
+          List.filterMap (\(src, c) -> if Constraint.hasContext GlobalContext c then Just src else Nothing) t
+      in
+        ul
+          []
+          (List.map (\src -> li [] [text src]) globalConstraints)
     viewCell addr cell =
       let
         css_classes =
@@ -98,5 +107,11 @@ view address model =
                 , body
                 ]
             ]
-      --, footer [] [text "Loading solver..."]
+      , div
+          [ id "constraints" ]
+          [ viewTableau model.tableau
+          , footer [] [
+              input [] []
+            ]
+          ]
       ]

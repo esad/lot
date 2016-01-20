@@ -18,7 +18,7 @@ inputs =
       (\{x,y} alt -> InputArrows {x = x, y = y, alt = alt})
       Keyboard.arrows
       (Keyboard.isDown 18)
-  , Keyboard.presses ~> InputKeypress
+  --, Keyboard.presses ~> InputKeypress
   ]
 
 port z3: String -- path to z3-emscripten
