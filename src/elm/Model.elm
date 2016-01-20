@@ -41,6 +41,7 @@ type Action
   ---
   | LoadSolver (Result String Solver.Solver)
   | Solve
+  | AddGlobalConstraint String
   ---
   | Select Addr -- Direct selection of the cell at given address
   | Move Addr.Direction -- Keyboard movement in this relative direction
@@ -105,6 +106,20 @@ update action model =
               nop
         _ ->
           let _ = Debug.log "No solver available" in nop
+    AddGlobalConstraint str ->
+      case model.solver of
+        Just (Ok solver) ->
+          case Tableau.parse GlobalContext str of
+            Ok t ->
+              anotherActionFx Solve
+                { model | 
+                  tableau = Tableau.append model.tableau t
+                }
+            Err error ->
+              nop
+        _ ->
+          let _ = Debug.log "No solver available" in nop
+    -- TODO: refactor this into something better, perhaps a NopSolver that ignored everything
     ---
     Clear ->
       let

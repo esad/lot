@@ -111,7 +111,7 @@ view address model =
           [ id "constraints" ]
           [ viewTableau model.tableau
           , footer [] [
-              input [] []
+              Helpers.cellInput "" address (\str -> AddGlobalConstraint str) Cancel
             ]
           ]
       ]

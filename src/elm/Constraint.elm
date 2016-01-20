@@ -75,7 +75,8 @@ hasContext : Context -> Constraint -> Bool
 hasContext context (Constraint e1 _ _) =
   case (context,e1) of
     (CellContext cellId, Id id) -> cellId == id
-    _ -> False
+    (CellContext _, _) -> False
+    (GlobalContext, _) -> True
 
 --- Parsing
 
