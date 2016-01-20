@@ -1,4 +1,4 @@
-module Constraint (Constraint, parse, toSmtAssert, identifiers, belongsToCell) where
+module Constraint (Constraint, Context(..), parse, toSmtAssert, identifiers, hasContext) where
 
 import Result
 import Combine exposing (..)
@@ -14,6 +14,8 @@ type Op = Add | Sub | Mul | Div
 type Expr = Const Float | Id String | Calc Op Expr Expr 
   
 type Constraint = Constraint Expr Rel Expr
+
+type Context = GlobalContext | CellContext String
 
 relToString : Rel -> String
 relToString rel =
@@ -90,11 +92,11 @@ identifiers (Constraint e1 rel e2) =
   in
     exprIdentifiers e1 `union` exprIdentifiers e2
         
--- Returns True if the constraint is defined for the cell with given identifier
-belongsToCell : String -> Constraint -> Bool
-belongsToCell id (Constraint e1 _ _) =
-  case e1 of
-    Id id' -> id == id'
+-- Returns True if the constraint was defined for the given context
+hasContext : Context -> Constraint -> Bool
+hasContext context (Constraint e1 _ _) =
+  case (context,e1) of
+    (CellContext cellId, Id id) -> cellId == id
     _ -> False
 
 --- Parsing
@@ -158,13 +160,13 @@ constraint =
   Constraint `map` expr `andMap` (tokenize rel) `andMap` expr
 
 -- Parses a constraint for cell (Just String) or global (Nothing)
-parse : Maybe String -> String -> Result (List String) Constraint
+parse : Context -> String -> Result (List String) Constraint
 parse context str =
   let parser =
     case context of
-      Nothing ->
+      GlobalContext ->
         constraint
-      Just id ->
+      CellContext id ->
         cellConstraint id
   in
   Combine.parse (parser <* end) str

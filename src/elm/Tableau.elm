@@ -4,7 +4,7 @@ import String
 import Result
 import Set
 
-import Constraint exposing (Constraint)
+import Constraint exposing (Constraint, Context(..))
 
 type alias Tableau = 
   List (String {- source text -}, Constraint)
@@ -39,7 +39,7 @@ toSmt t =
 -- (Nothing if it's a global constraint, Just String if contraints belong to cell with the given identifier)
 -- If all of the constraints are parsed successfully, an Ok Tableau is returned, Err with list of
 -- parsing errors otherwise.
-parse : Maybe String -> String -> Result (List String) Tableau
+parse : Constraint.Context -> String -> Result (List String) Tableau
 parse context source =
   let
     parse str =
@@ -58,11 +58,11 @@ append = (++)
 -- Returns a new tableau without all constraints belonging to given cell identifier
 dropCell : String -> Tableau -> Tableau
 dropCell id t =
-  List.filter (snd >> (Constraint.belongsToCell id) >> not) t
+  List.filter (snd >> (Constraint.hasContext (CellContext id)) >> not) t
 
 -- Returns concatenated sources of all constraints related to this cell
 source : String -> Tableau -> String
 source id t =
   t
-  |> List.filterMap (\(source, c) -> if Constraint.belongsToCell id c then Just source else Nothing)
+  |> List.filterMap (\(source, c) -> if Constraint.hasContext (CellContext id) c then Just source else Nothing)
   |> String.join (sep ++ " ")

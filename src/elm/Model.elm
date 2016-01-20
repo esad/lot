@@ -9,7 +9,7 @@ import Maybe exposing (andThen)
 import Task
 import Effects
 import Solver
---import Constraint
+import Constraint exposing (Context(..))
 import Tableau
 
 type alias Model = 
@@ -133,7 +133,7 @@ update action model =
             True ->
               (EmptyCell, [])
             False ->
-              case Tableau.parse (Just id) str of
+              case Tableau.parse (CellContext id) str of
                 Err _ ->
                   (TextCell str, [])
                 Ok t ->
