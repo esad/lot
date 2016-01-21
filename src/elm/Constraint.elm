@@ -1,4 +1,4 @@
-module Constraint (Constraint, Context(..), parse, toSmtAssert, identifiers, hasContext) where
+module Constraint (Constraint, Context(..), parse, toSmtAssert, identifiers, hasContext, toString) where
 
 import Result
 import Combine exposing (..)
@@ -35,6 +35,14 @@ opToString op =
     Mul   -> "*"
     Div   -> "/"
 
+opPriority : Op -> Int
+opPriority op =
+  case op of
+    Add -> 0
+    Sub -> 0
+    Mul -> 1
+    Div -> 1
+
 toSmtAssert : Constraint -> String
 toSmtAssert (Constraint e1 rel e2) =
   let
@@ -42,12 +50,9 @@ toSmtAssert (Constraint e1 rel e2) =
       "(" ++ (String.join " " xs) ++ ")"
     exprSexp e =
       case e of 
-        Const c ->
-          toString c
-        Id i ->
-          i
-        Calc op e1 e2 ->
-          sexp [opToString op, exprSexp e1, exprSexp e2]
+        Const c -> Basics.toString c
+        Id i -> i
+        Calc op e1 e2 -> sexp [opToString op, exprSexp e1, exprSexp e2]
   in
     sexp
       [ "assert"
@@ -78,6 +83,36 @@ hasContext context (Constraint e1 _ _) =
     (CellContext _, _) -> False
     (GlobalContext, _) -> True
 
+
+-- Convert a constraint back to string, trying to be clever about parenthesis
+-- If a supplied context matches the cell then the first part of expression before relation operator is left out
+-- i.e. a1 = 500 -> "= 500"
+toString : Context -> Constraint -> String
+toString context (Constraint e1 rel e2 as constraint) =
+  let
+    parenthesize str = 
+      "(" ++ str ++ ")"
+    exprToString e ancestorOp =
+      case e of
+        Const c -> Basics.toString c
+        Id i -> i
+        Calc op e1 e2 ->
+          let
+            result = exprToString e1 (Just op) ++ opToString op ++ exprToString e2 (Just op)
+          in
+          if opPriority (Maybe.withDefault op ancestorOp) > opPriority op then 
+            parenthesize result
+          else
+            result
+  in
+    (if context /= GlobalContext && hasContext context constraint then
+      ""
+    else 
+      exprToString e1 Nothing ++ " "
+    )
+    ++
+    relToString rel ++ " " ++ exprToString e2 Nothing
+    
 --- Parsing
 
 tokenize : Parser a -> Parser a

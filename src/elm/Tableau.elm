@@ -7,7 +7,7 @@ import Set
 import Constraint exposing (Constraint, Context(..))
 
 type alias Tableau = 
-  List (String {- source text -}, Constraint)
+  List Constraint
 
 empty : Tableau
 empty =
@@ -23,7 +23,7 @@ toSmt : Tableau -> Maybe (String, List String)
 toSmt t =
   let
     (asserts, ids) =
-      List.foldl (\(_, constraint) (asserts, identifiers) -> 
+      List.foldl (\constraint (asserts, identifiers) -> 
         ( Constraint.toSmtAssert constraint :: asserts
         , Set.union (Constraint.identifiers constraint) identifiers
         )
@@ -40,15 +40,11 @@ toSmt t =
 -- parsing errors otherwise.
 parse : Constraint.Context -> String -> Result (List String) Tableau
 parse context source =
-  let
-    parse str =
-      Result.map (\c -> (str,c)) (Constraint.parse context str)
-  in
   source
   |> String.split sep
   |> List.map String.trim
   |> List.filter (String.isEmpty >> not)
-  |> List.foldr (parse >> Result.map2 (::)) (Ok [])
+  |> List.foldr ((Constraint.parse context) >> Result.map2 (::)) (Ok [])
 
 
 append : Tableau -> Tableau -> Tableau
@@ -57,11 +53,11 @@ append = (++)
 -- Returns a new tableau without all constraints belonging to given cell identifier
 dropCell : String -> Tableau -> Tableau
 dropCell id t =
-  List.filter (snd >> (Constraint.hasContext (CellContext id)) >> not) t
+  List.filter (Constraint.hasContext (CellContext id) >> not) t
 
 -- Returns concatenated sources of all constraints related to this cell
 source : String -> Tableau -> String
 source id t =
   t
-  |> List.filterMap (\(source, c) -> if Constraint.hasContext (CellContext id) c then Just source else Nothing)
+  |> List.filterMap (\c -> if Constraint.hasContext (CellContext id) c then Just (Constraint.toString (CellContext id) c) else Nothing)
   |> String.join (sep ++ " ")

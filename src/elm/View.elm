@@ -24,7 +24,7 @@ view address model =
     viewTableau t =
       let
         globalConstraints =
-          List.filterMap (\(src, c) -> if Constraint.hasContext GlobalContext c then Just src else Nothing) t
+          List.filterMap (\c -> if Constraint.hasContext GlobalContext c then Just (Constraint.toString GlobalContext c) else Nothing) t
       in
         ul
           []
