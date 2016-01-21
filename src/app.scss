@@ -35,6 +35,10 @@ input {
     flex: 2 auto;
     overflow: auto;
     order: 2;
+
+    &:not(.selected) .selected {
+      border-color: $gray-0-color;
+    }
   }
 
   #constraints {

@@ -8,7 +8,7 @@ import Maybe
 import String
 
 import Helpers
-import Model exposing (Action(..))
+import Model exposing (Action(..), Focus(..))
 import Sheet
 import Cell exposing (Cell(..))
 import Constraint exposing (Context(..))
@@ -59,7 +59,7 @@ view address model =
               , classList [("selected", selected), ("editing", True)]
               ]
               [
-                Helpers.cellInput editStr address (\str -> Commit addr str) Cancel
+                Helpers.input editStr address Nop (\str -> Commit addr str) Cancel
               ]
     viewHeader header idx =
       let
@@ -94,24 +94,32 @@ view address model =
       |> tbody []
   in
     div [ classList [("app", True)] ]
-      [ main' [] <|
-        case model.solver of
-          Nothing ->
-            [ div [ class "loader" ] [text "Loading solver..."] ]
-          Just (Err _) ->
-            [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
-          Just (Ok _) ->
-            [ 
-              table []
-                [ colHeader
-                , body
-                ]
-            ]
+      [ main' 
+        [ classList [("selected", model.focus == Spreadsheet)]
+        , onClick address (SwitchFocus Spreadsheet)
+        ]
+        (
+          case model.solver of
+            Nothing ->
+              [ div [ class "loader" ] [text "Loading solver..."] ]
+            Just (Err _) ->
+              [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
+            Just (Ok _) ->
+              [ 
+                table []
+                  [ colHeader
+                  , body
+                  ]
+              ]
+        )
       , div
-          [ id "constraints" ]
+          [ id "constraints"
+          , classList [("selected", model.focus == Globals)]
+          --, onClick address (SwitchFocus Globals)
+          ]
           [ viewTableau model.tableau
           , footer [] [
-              Helpers.cellInput "" address (\str -> AddGlobalConstraint str) Cancel
+              Helpers.input "" address (SwitchFocus Globals) (\str -> AddGlobalConstraint str) (SwitchFocus Spreadsheet)
             ]
           ]
       ]

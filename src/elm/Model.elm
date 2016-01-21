@@ -1,4 +1,4 @@
-module Model (Model, Action, Action(..), empty, isEditing, update) where
+module Model (Model, Action, Action(..), Focus(..), empty, isEditing, update) where
 
 import Sheet
 import Cell exposing (Cell(..))
@@ -12,8 +12,11 @@ import Solver
 import Constraint exposing (Context(..))
 import Tableau
 
+type Focus = Spreadsheet | Globals
+
 type alias Model = 
-  { sheet : Sheet.Sheet
+  { focus : Focus
+  , sheet : Sheet.Sheet
   , selection : Addr
   -- If Nothing, no cell is being edited. If Just String, then the string holds initial value
   -- of the edit box (which can be empty string). Only currently selected cell can be edited.
@@ -24,7 +27,8 @@ type alias Model =
 
 empty : Model
 empty =
-  { sheet = Sheet.initialize 5 5
+  { focus = Spreadsheet
+  , sheet = Sheet.initialize 5 5
   , selection = Addr.fromColRow 0 0
   , editing = Nothing
   , tableau = Tableau.empty
@@ -38,6 +42,7 @@ isEditing model =
 type Action
   = InputArrows { x: Int, y: Int, alt: Bool }
   | InputKeypress Char.KeyCode
+  | SwitchFocus Focus
   ---
   | LoadSolver (Result String Solver.Solver)
   | Solve
@@ -50,6 +55,8 @@ type Action
   | Commit Addr String
   | Cancel
   | Clear -- updates selected cell to an empty cell
+  ---
+  | Nop
 
 update : Action -> Model -> (Model, Effects.Effects Action)
 update action model =
@@ -66,27 +73,42 @@ update action model =
       (model, Task.succeed action |> Effects.task)
   in
   case action of
+    Nop ->
+      nop
+    SwitchFocus f ->
+      noFx
+        { model | 
+          focus = f
+        }
     InputArrows a ->
-      case (Addr.xy2dir a, isEditing model) of
-        (Just Left, True) -> 
-          nop
-        (Just Right, True) ->
-          nop
-        (Just dir, _) ->
-          anotherActionFx (if a.alt then Insert dir else Move dir) model
-        (Nothing, _) ->
+      case model.focus of
+        Spreadsheet ->
+          case (Addr.xy2dir a, isEditing model) of
+            (Just Left, True) -> 
+              nop
+            (Just Right, True) ->
+              nop
+            (Just dir, _) ->
+              anotherActionFx (if a.alt then Insert dir else Move dir) model
+            (Nothing, _) ->
+              nop
+        Globals ->
           nop
     InputKeypress key ->
-      case (isEditing model, key) of
-        (_, 0) ->
+      case model.focus of
+        Spreadsheet ->
+          case (isEditing model, key) of
+            (_, 0) ->
+              nop
+            (True, _) ->
+              nop
+            (False, 8) ->
+              anotherActionFx Clear model
+            (False, _) ->
+              -- Enter should be like double-click
+              anotherActionFx (Edit <| if key == 13 then Nothing else Just <| Char.fromCode key) model
+        Globals ->
           nop
-        (True, _) ->
-          nop
-        (False, 8) ->
-          anotherActionFx Clear model
-        (False, _) ->
-          -- Enter should be like double-click
-          anotherActionFx (Edit <| if key == 13 then Nothing else Just <| Char.fromCode key) model
     ---
     LoadSolver result ->
       noFx
@@ -134,9 +156,10 @@ update action model =
           noFx { model | sheet = clearSheet }
     Select addr ->
       noFx 
-        { model | 
-          selection = addr
-        } 
+        { model
+        | focus = Spreadsheet
+        , selection = addr
+        }
     Commit addr str ->
       let
         cell = 

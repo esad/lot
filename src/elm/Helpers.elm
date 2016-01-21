@@ -1,20 +1,22 @@
-module Helpers (cellInput) where
+module Helpers (input) where
 
 import Signal
 import Json.Decode as Json exposing (..)
 import Html exposing (input)
 import Html.Attributes exposing (attribute, autofocus, value)
-import Html.Events exposing (on)
+import Html.Events exposing (on, onFocus)
 
 import Debug
 
-cellInput : String -> Signal.Address a -> (String -> a) -> a -> Html.Html
-cellInput initialValue address commitAction cancelAction =
-  input 
+input : String -> Signal.Address a -> a -> (String -> a) -> a -> Html.Html
+input initialValue address focusAction commitAction cancelAction =
+  Html.input 
     (
       [ Html.Attributes.value initialValue
       , autofocus True
-      ] ++
+      , onFocus address focusAction
+      ] 
+      ++
       onFinish address commitAction cancelAction
     )
     []
