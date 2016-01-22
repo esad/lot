@@ -195,11 +195,8 @@ update action model =
           , tableau =
               if reevaluate then
                 model.tableau 
-                |> Debug.log "T1" 
                 |> Tableau.dropCell id
-                |> Debug.log "T2"
-                |> Tableau.append newTableau
-                |> Debug.log "NEW"
+                |> flip Tableau.append newTableau
               else
                 model.tableau
         }
