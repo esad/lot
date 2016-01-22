@@ -1,13 +1,13 @@
 module View (view) where 
 
-import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, input, textarea, footer, main', ul, li)
+import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, textarea, footer, main', ul, li)
 import Html.Attributes exposing (class, classList, value, key, id)
 import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
 import Maybe
 import String
 
-import Helpers
+import Helpers.Input
 import Model exposing (Action(..), Focus(..))
 import Sheet
 import Cell exposing (Cell(..))
@@ -62,7 +62,14 @@ view address model =
               , classList [("selected", selected), ("editing", True)]
               ]
               [
-                Helpers.input editStr address Nop (\str -> Commit addr str) Cancel
+                Helpers.Input.input
+                  { initialValue = editStr
+                  , autofocus = True
+                  , address = address
+                  , onFocus = Nop
+                  , onCommit = Commit addr
+                  , onCancel = Cancel
+                  }
               ]
     viewHeader header idx =
       let
@@ -121,7 +128,14 @@ view address model =
             ]
             [ viewTableau model.tableau
             , footer [] [
-                Helpers.input "" address (SwitchFocus Globals) (\str -> AddGlobalConstraint str) (SwitchFocus Spreadsheet)
+                Helpers.Input.input 
+                  { initialValue = ""
+                  , autofocus = False
+                  , address = address
+                  , onFocus = SwitchFocus Globals
+                  , onCommit = AddGlobalConstraint
+                  , onCancel = SwitchFocus Spreadsheet
+                  }
               ]
             ]
         ])

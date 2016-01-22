@@ -1,4 +1,4 @@
-module Helpers (input) where
+module Helpers.Input (Config, input) where
 
 import Signal
 import Json.Decode as Json exposing (..)
@@ -8,16 +8,25 @@ import Html.Events exposing (on, onFocus)
 
 import Debug
 
-input : String -> Signal.Address a -> a -> (String -> a) -> a -> Html.Html
-input initialValue address focusAction commitAction cancelAction =
+type alias Config a = 
+  { initialValue: String
+  , autofocus: Bool
+  , address: Signal.Address a
+  , onFocus: a
+  , onCommit: (String -> a)
+  , onCancel: a
+  }
+
+input : Config a -> Html.Html
+input config =
   Html.input 
     (
-      [ Html.Attributes.value initialValue
-      , autofocus True
-      , onFocus address focusAction
+      [ Html.Attributes.value config.initialValue
+      , autofocus config.autofocus
+      , onFocus config.address config.onFocus
       ] 
       ++
-      onFinish address commitAction cancelAction
+      onFinish config.address config.onCommit config.onCancel
     )
     []
 
