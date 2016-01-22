@@ -53,9 +53,20 @@ input {
     flex-direction: column;
     
     ul {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0px 4px 0 8px;
+      list-style: none;
+
       flex: 2 auto;
       display: block;
+
+      li {
+        line-height: 21px;
+
+        &.related {
+          text-decoration: underline;
+        }
+      }
     }
 
     footer {

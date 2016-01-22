@@ -13,6 +13,7 @@ import Sheet
 import Cell exposing (Cell(..))
 import Constraint exposing (Context(..))
 import Addr
+import Set
 
 type Header = RowHeader | ColHeader
 
@@ -21,14 +22,16 @@ nbsp = "\xa0"
 view : Signal.Address Action -> Model.Model -> Html
 view address model =
   let
+    selectedCellIdentifier =
+      Addr.toIdentifier model.selection
     viewTableau t =
-      let
-        globalConstraints =
-          List.filterMap (\c -> if Constraint.hasContext GlobalContext c then Just (Constraint.toString GlobalContext c) else Nothing) t
-      in
-        ul
-          []
-          (List.map (\src -> li [] [text src]) globalConstraints)
+      ul
+        []
+        (List.map (\c -> 
+          li
+            [classList [("related", Constraint.identifiers c |> Set.member selectedCellIdentifier)]] 
+            [text <| Constraint.toString GlobalContext c]
+        ) model.tableau)
     viewCell addr cell =
       let
         css_classes =
