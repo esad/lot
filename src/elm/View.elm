@@ -93,33 +93,32 @@ view address model =
       |> List.indexedMap viewRow
       |> tbody []
   in
-    div [ classList [("app", True)] ]
-      [ main' 
-        [ classList [("selected", model.focus == Spreadsheet)]
-        , onClick address (SwitchFocus Spreadsheet)
-        ]
-        (
-          case model.solver of
-            Nothing ->
-              [ div [ class "loader" ] [text "Loading solver..."] ]
-            Just (Err _) ->
-              [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
-            Just (Ok _) ->
-              [ 
-                table []
-                  [ colHeader
-                  , body
-                  ]
+    div
+      [ classList [("app", True)] ]
+      (case model.solver of
+      Nothing ->
+        [ div [ class "loader" ] [text "Loading solver..."] ]
+      Just (Err _) ->
+        [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
+      Just (Ok _) ->
+        [ main' 
+          [ classList [("selected", model.focus == Spreadsheet)]
+          , onClick address (SwitchFocus Spreadsheet)
+          ]
+          [ 
+            table []
+              [ colHeader
+              , body
               ]
-        )
-      , div
-          [ id "constraints"
-          , classList [("selected", model.focus == Globals)]
-          --, onClick address (SwitchFocus Globals)
           ]
-          [ viewTableau model.tableau
-          , footer [] [
-              Helpers.input "" address (SwitchFocus Globals) (\str -> AddGlobalConstraint str) (SwitchFocus Spreadsheet)
+        , div
+            [ id "constraints"
+            , classList [("selected", model.focus == Globals)]
+            --, onClick address (SwitchFocus Globals)
             ]
-          ]
-      ]
+            [ viewTableau model.tableau
+            , footer [] [
+                Helpers.input "" address (SwitchFocus Globals) (\str -> AddGlobalConstraint str) (SwitchFocus Spreadsheet)
+              ]
+            ]
+        ])
