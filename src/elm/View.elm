@@ -1,6 +1,6 @@
 module View (view) where 
 
-import Html exposing (Html, div, span, text, table, thead, tbody, th, tr, td, button, textarea, footer, main', ul, li)
+import Html exposing (Html, a, div, span, text, table, thead, tbody, th, tr, td, button, textarea, footer, main', ul, li)
 import Html.Attributes exposing (class, classList, value, key, id)
 import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
@@ -27,10 +27,12 @@ view address model =
     viewTableau t =
       ul
         []
-        (List.map (\c -> 
+        (List.indexedMap (\i c -> 
           li
-            [classList [("related", Constraint.identifiers c |> Set.member selectedCellIdentifier)]] 
-            [text <| Constraint.toString GlobalContext c]
+            [ classList [("related", Constraint.identifiers c |> Set.member selectedCellIdentifier)] ] 
+            [ text <| Constraint.toString GlobalContext c
+            , a [onClick address (DropConstraint i)] [ text "del"] 
+            ]
         ) model.tableau)
     viewCell addr cell =
       let
@@ -133,7 +135,7 @@ view address model =
                   , autofocus = False
                   , address = address
                   , onFocus = SwitchFocus Globals
-                  , onCommit = AddGlobalConstraint
+                  , onCommit = AddConstraint
                   , onCancel = SwitchFocus Spreadsheet
                   }
               ]
