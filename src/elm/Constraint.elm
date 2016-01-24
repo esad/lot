@@ -13,7 +13,7 @@ type Op = Add | Sub | Mul | Div
 
 type Expr = Const Float | Id String | Calc Op Expr Expr 
 
-type Predicate = AllDifferent
+type Predicate = Distinct
   
 type Constraint = Constraint Expr Rel Expr | PredicateConstraint Predicate (List Expr)
 
@@ -40,7 +40,7 @@ opToString op =
 predicateToString : Predicate -> String
 predicateToString p =
   case p of
-    AllDifferent -> "all_different"
+    Distinct -> "distinct"
 
 opPriority : Op -> Int
 opPriority op =
@@ -62,19 +62,8 @@ toSmtAssert constraint =
         Calc op e1 e2 -> sexp [opToString op, exprSexp e1, exprSexp e2]
   in
     case constraint of
-      PredicateConstraint AllDifferent exprs ->
+      PredicateConstraint Distinct exprs ->
         sexp ["assert", sexp ("distinct" :: List.map exprSexp exprs)]
-        --let 
-        --  pairs list = 
-        --    case list of
-        --      [] -> []
-        --      [_] -> []
-        --      x :: (y :: xs as rest) ->  (x, y) :: pairs rest
-        --in
-        --exprs
-        --|> pairs
-        --|> List.map (\(x,y) -> sexp ["assert", sexp ["not", sexp ["=", exprSexp x, exprSexp y]]])
-        --|> String.join " "
       (Constraint e1 rel e2) ->
         sexp
           [ "assert"
@@ -174,7 +163,7 @@ addOp =
 
 predicate : Parser Predicate
 predicate =
-  makeParser [AllDifferent] predicateToString
+  makeParser [Distinct] predicateToString
 
 constExpr : Parser Expr
 constExpr = 
