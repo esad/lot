@@ -63,17 +63,18 @@ toSmtAssert constraint =
   in
     case constraint of
       PredicateConstraint AllDifferent exprs ->
-        let 
-          pairs list = 
-            case list of
-              [] -> []
-              [_] -> []
-              x :: (y :: xs as rest) ->  (x, y) :: pairs rest
-        in
-        exprs
-        |> pairs
-        |> List.map (\(x,y) -> sexp ["assert", sexp ["not", sexp ["=", exprSexp x, exprSexp y]]])
-        |> String.join " "
+        sexp ["assert", sexp ("distinct" :: List.map exprSexp exprs)]
+        --let 
+        --  pairs list = 
+        --    case list of
+        --      [] -> []
+        --      [_] -> []
+        --      x :: (y :: xs as rest) ->  (x, y) :: pairs rest
+        --in
+        --exprs
+        --|> pairs
+        --|> List.map (\(x,y) -> sexp ["assert", sexp ["not", sexp ["=", exprSexp x, exprSexp y]]])
+        --|> String.join " "
       (Constraint e1 rel e2) ->
         sexp
           [ "assert"
