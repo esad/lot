@@ -1,4 +1,4 @@
-module Tableau (Tableau, empty, parse, append, dropCell, toSmt, source) where
+module Tableau (Tableau, empty, dropAt, parse, append, dropCell, toSmt, source) where
 
 import String
 import Result
@@ -12,6 +12,13 @@ type alias Tableau =
 empty : Tableau
 empty =
   []
+
+-- Drops a constraint at given index, if it exists
+dropAt : Int -> Tableau -> Tableau
+dropAt i xs =
+ List.take i xs
+ ++
+ List.drop (i+1) xs
 
 
 sep : String
