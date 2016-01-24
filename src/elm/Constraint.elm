@@ -12,8 +12,10 @@ type Rel = Eq | NotEq | Lt | LtEq | Gt | GtEq
 type Op = Add | Sub | Mul | Div
 
 type Expr = Const Float | Id String | Calc Op Expr Expr 
+
+type Predicate = AllDifferent
   
-type Constraint = Constraint Expr Rel Expr
+type Constraint = Constraint Expr Rel Expr | PredicateConstraint Predicate (List Expr)
 
 type Context = GlobalContext | CellContext String
 
@@ -35,6 +37,11 @@ opToString op =
     Mul   -> "*"
     Div   -> "/"
 
+predicateToString : Predicate -> String
+predicateToString p =
+  case p of
+    AllDifferent -> "all_different"
+
 opPriority : Op -> Int
 opPriority op =
   case op of
@@ -44,7 +51,7 @@ opPriority op =
     Div -> 1
 
 toSmtAssert : Constraint -> String
-toSmtAssert (Constraint e1 rel e2) =
+toSmtAssert constraint =
   let
     sexp xs =
       "(" ++ (String.join " " xs) ++ ")"
@@ -54,18 +61,32 @@ toSmtAssert (Constraint e1 rel e2) =
         Id i -> i
         Calc op e1 e2 -> sexp [opToString op, exprSexp e1, exprSexp e2]
   in
-    sexp
-      [ "assert"
-      , case rel of 
-          NotEq ->
-            -- != must be transformed into (not (= ...))
-            sexp ["not", sexp [relToString Eq, exprSexp e1, exprSexp e2]]
-          _ ->
-            sexp [relToString rel, exprSexp e1, exprSexp e2]
-      ]
+    case constraint of
+      PredicateConstraint AllDifferent exprs ->
+        let 
+          pairs list = 
+            case list of
+              [] -> []
+              [_] -> []
+              x :: (y :: xs as rest) ->  (x, y) :: pairs rest
+        in
+        exprs
+        |> pairs
+        |> List.map (\(x,y) -> sexp ["assert", sexp ["not", sexp ["=", exprSexp x, exprSexp y]]])
+        |> String.join " "
+      (Constraint e1 rel e2) ->
+        sexp
+          [ "assert"
+          , case rel of 
+              NotEq ->
+                -- != must be transformed into (not (= ...))
+                sexp ["not", sexp [relToString Eq, exprSexp e1, exprSexp e2]]
+              _ ->
+                sexp [relToString rel, exprSexp e1, exprSexp e2]
+          ]
 
 identifiers : Constraint -> Set.Set String
-identifiers (Constraint e1 rel e2) =
+identifiers constraint =
   let
     exprIdentifiers e =
       case e of 
@@ -73,22 +94,29 @@ identifiers (Constraint e1 rel e2) =
         Id i -> Set.singleton i
         Calc op e1 e2 -> exprIdentifiers e1 `union` exprIdentifiers e2
   in
-    exprIdentifiers e1 `union` exprIdentifiers e2
+    case constraint of 
+      PredicateConstraint _ exprs ->
+        List.foldl (\e set -> Set.union set (exprIdentifiers e)) Set.empty exprs
+      Constraint e1 rel e2 ->
+        exprIdentifiers e1 `union` exprIdentifiers e2
         
 -- Returns True if the constraint was defined for the given context
 hasContext : Context -> Constraint -> Bool
-hasContext context (Constraint e1 _ _) =
-  case (context,e1) of
-    (CellContext cellId, Id id) -> cellId == id
-    (CellContext _, _) -> False
-    (GlobalContext, _) -> True
-
+hasContext context constraint =
+  case constraint of
+    PredicateConstraint _ _ ->
+      context == GlobalContext
+    Constraint e1 _ _ ->
+      case (context,e1) of
+        (CellContext cellId, Id id) -> cellId == id
+        (CellContext _, _) -> False
+        (GlobalContext, _) -> True
 
 -- Convert a constraint back to string, trying to be clever about parenthesis
 -- If a supplied context matches the cell then the first part of expression before relation operator is left out
 -- i.e. a1 = 500 -> "= 500"
 toString : Context -> Constraint -> String
-toString context (Constraint e1 rel e2 as constraint) =
+toString context constraint =
   let
     parenthesize str = 
       "(" ++ str ++ ")"
@@ -105,13 +133,17 @@ toString context (Constraint e1 rel e2 as constraint) =
           else
             result
   in
-    (if context /= GlobalContext && hasContext context constraint then
-      ""
-    else 
-      exprToString e1 Nothing ++ " "
-    )
-    ++
-    relToString rel ++ " " ++ exprToString e2 Nothing
+    case constraint of
+      PredicateConstraint p xs ->
+        predicateToString p ++ "(" ++ (String.join "," <| List.map (flip exprToString Nothing) xs) ++ ")"
+      (Constraint e1 rel e2 as constraint) ->
+        (if context /= GlobalContext && hasContext context constraint then
+          ""
+        else 
+          exprToString e1 Nothing ++ " "
+        )
+        ++
+        relToString rel ++ " " ++ exprToString e2 Nothing
     
 --- Parsing
 
@@ -138,6 +170,10 @@ mulOp =
 addOp : Parser Op
 addOp =
   makeParser [Add, Sub] opToString
+
+predicate : Parser Predicate
+predicate =
+  makeParser [AllDifferent] predicateToString
 
 constExpr : Parser Expr
 constExpr = 
@@ -171,7 +207,9 @@ cellConstraint id =
 -- Otherwise, we use this global constraint parser where left side can be any expression:
 constraint : Parser Constraint
 constraint =
-  Constraint `map` expr `andMap` (tokenize rel) `andMap` expr
+  PredicateConstraint `map` predicate `andMap` parens (sepBy (string ",") expr)
+  `or`
+  (Constraint `map` expr `andMap` (tokenize rel) `andMap` expr)
 
 -- Parses a constraint for cell (Just String) or global (Nothing)
 parse : Context -> String -> Result (List String) Constraint
