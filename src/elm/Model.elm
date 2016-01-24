@@ -14,13 +14,17 @@ import Tableau
 
 type Focus = Sheet | Tableau
 
+type alias Editing =
+  { quick : Bool  -- if initiated by a keypress
+  , initialValue : String
+  }
+
 type alias Model = 
   { focus : Focus
   , sheet : Sheet.Sheet
   , selection : Addr
-  -- If Nothing, no cell is being edited. If Just String, then the string holds initial value
-  -- of the edit box (which can be empty string). Only currently selected cell can be edited.
-  , editing : Maybe String
+  -- If Nothing, no cell is being edited. If Just, currently selected cell is being edited
+  , editing : Maybe Editing
   , tableau: Tableau.Tableau
   , solver: Maybe (Result String Solver.Solver) -- available when z3 solver loads successfully (see LoadSolver action)
   }
@@ -84,10 +88,10 @@ update action model =
     InputArrows a ->
       case model.focus of
         Sheet ->
-          case (Addr.xy2dir a, isEditing model) of
-            (Just Left, True) -> 
+          case (Addr.xy2dir a, Maybe.map (.quick) model.editing) of
+            (Just Left, Just False) -> 
               nop
-            (Just Right, True) ->
+            (Just Right, Just False) ->
               nop
             (Just dir, _) ->
               anotherActionFx (if a.alt then Insert dir else Move dir) model
@@ -208,21 +212,30 @@ update action model =
         }
     Edit char ->
       let
-        id = Addr.toIdentifier model.selection
+        id =
+          Addr.toIdentifier model.selection
+        editing =
+          case char of
+            Nothing -> 
+              { quick = False
+              , initialValue = 
+                  Sheet.get model.selection model.sheet
+                  |> Maybe.map (\cell ->
+                        case cell of 
+                          TextCell t -> t
+                          ResultCell _ -> Tableau.source id model.tableau
+                          EmptyCell -> ""
+                    )
+                  |> Maybe.withDefault ""
+              }
+            Just c ->
+              { quick = True
+              , initialValue = String.fromChar c
+              }
       in
       noFx
         { model | 
-          editing = 
-            Maybe.oneOf 
-              [ char `andThen` (String.fromChar >> Just)
-              , (Sheet.get model.selection model.sheet) `andThen` (\cell ->
-                case cell of 
-                  TextCell t -> Just t
-                  ResultCell _ -> Just <| Tableau.source id model.tableau
-                  _ -> Just ""
-              )
-              , Just "?"
-              ]
+          editing = Just editing
         }
     Move direction ->
       noFx

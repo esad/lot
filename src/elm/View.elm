@@ -58,14 +58,14 @@ view address model =
                 |> Maybe.withDefault nbsp
                 |> text
               ]
-          Just editStr ->
+          Just editInfo ->
             td
               [ key (toString addr)
               , classList [("selected", selected), ("editing", True)]
               ]
               [
                 Helpers.Input.input
-                  { initialValue = editStr
+                  { initialValue = editInfo.initialValue
                   , autofocus = True
                   , address = address
                   , onFocus = Nop
