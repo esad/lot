@@ -114,8 +114,8 @@ view address model =
         [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
       Just (Ok _) ->
         [ main' 
-          [ classList [("selected", model.focus == Spreadsheet)]
-          , onClick address (SwitchFocus Spreadsheet)
+          [ classList [("selected", model.focus == Sheet)]
+          , onClick address (SwitchFocus Sheet)
           ]
           [ 
             table []
@@ -125,8 +125,8 @@ view address model =
           ]
         , div
             [ id "constraints"
-            , classList [("selected", model.focus == Globals)]
-            --, onClick address (SwitchFocus Globals)
+            , classList [("selected", model.focus == Tableau)]
+            --, onClick address (SwitchFocus Tableau)
             ]
             [ viewTableau model.tableau
             , footer [] [
@@ -134,9 +134,9 @@ view address model =
                   { initialValue = ""
                   , autofocus = False
                   , address = address
-                  , onFocus = SwitchFocus Globals
+                  , onFocus = SwitchFocus Tableau
                   , onCommit = AddConstraint
-                  , onCancel = SwitchFocus Spreadsheet
+                  , onCancel = SwitchFocus Sheet
                   }
               ]
             ]

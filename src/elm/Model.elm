@@ -12,7 +12,7 @@ import Solver
 import Constraint exposing (Context(..))
 import Tableau
 
-type Focus = Spreadsheet | Globals
+type Focus = Sheet | Tableau
 
 type alias Model = 
   { focus : Focus
@@ -27,7 +27,7 @@ type alias Model =
 
 empty : Model
 empty =
-  { focus = Spreadsheet
+  { focus = Sheet
   , sheet = Sheet.initialize 5 5
   , selection = Addr.fromColRow 0 0
   , editing = Nothing
@@ -83,7 +83,7 @@ update action model =
         }
     InputArrows a ->
       case model.focus of
-        Spreadsheet ->
+        Sheet ->
           case (Addr.xy2dir a, isEditing model) of
             (Just Left, True) -> 
               nop
@@ -93,11 +93,11 @@ update action model =
               anotherActionFx (if a.alt then Insert dir else Move dir) model
             (Nothing, _) ->
               nop
-        Globals ->
+        Tableau ->
           nop
     InputKeypress key ->
       case model.focus of
-        Spreadsheet ->
+        Sheet ->
           case (isEditing model, key) of
             (_, 0) ->
               nop
@@ -108,7 +108,7 @@ update action model =
             (False, _) ->
               -- Enter should be like double-click
               anotherActionFx (Edit <| if key == 13 then Nothing else Just <| Char.fromCode key) model
-        Globals ->
+        Tableau ->
           nop
     ---
     LoadSolver result ->
@@ -158,7 +158,7 @@ update action model =
     Select addr ->
       noFx 
         { model
-        | focus = Spreadsheet
+        | focus = Sheet
         , selection = addr
         }
     Commit addr str ->
