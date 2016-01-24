@@ -31,7 +31,7 @@ view address model =
           li
             [ classList [("related", Constraint.identifiers c |> Set.member selectedCellIdentifier)] ] 
             [ text <| Constraint.toString GlobalContext c
-            , a [onClick address (DropConstraint i)] [ text "del"] 
+            , a [onClick address (DropConstraint i)] [ text "✕"] 
             ]
         ) model.tableau)
     viewCell addr cell =

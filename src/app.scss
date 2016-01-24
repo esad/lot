@@ -45,6 +45,7 @@ input {
 
     min-width: 200px;
     background: #f7f7f7;
+    background: #fbfcfd;
     border-left: 1px solid #bebebe;
     order: 2;
 
@@ -54,17 +55,32 @@ input {
     
     ul {
       margin: 0;
-      padding: 0px 4px 0 8px;
+      padding: 0;
       list-style: none;
 
       flex: 2 auto;
       display: block;
 
       li {
+        padding: 0 7px;
         line-height: 21px;
 
         &.related {
           text-decoration: underline;
+        }
+        // Delete button
+        a {
+          float: right;
+          display: none;
+          cursor: pointer;
+        }
+
+        &:hover {
+          background: $accent-color;
+          color: white;
+          a {
+            display: block;
+          }
         }
       }
     }
