@@ -32,7 +32,7 @@ type alias Model =
   -- When true, model is unsatisfiable
   , unsat: Bool
   -- This holds last satisfiable model, if any
-  , lastSat: Maybe (Sheet.Sheet, Tableau.Tableau)
+  , lastSat: Maybe (Sheet.Sheet, Tableau.Tableau, Solver.Domain)
   }
 
 empty : Model
@@ -140,7 +140,7 @@ update action model =
                 { model
                 | sheet = solution
                 , unsat = False
-                , lastSat = Just (model.sheet, model.tableau)
+                , lastSat = Just (model.sheet, model.tableau, model.domain)
                 }
             Err error ->
               noFx
@@ -174,11 +174,12 @@ update action model =
           nop
         (True, Nothing) ->
           let _ = Debug.log "Can't undo - no satisfiable model known" in nop
-        (True, Just (sheet, tableau)) ->
+        (True, Just (sheet, tableau, domain)) ->
           anotherActionFx Solve 
             { model 
             | sheet = sheet
             , tableau = tableau
+            , domain = domain
             }
     ---
     Clear ->
