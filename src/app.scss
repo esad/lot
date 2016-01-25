@@ -88,6 +88,7 @@ input {
     ul {
       margin: 0;
       padding: 0;
+      padding-top: 10px;
       list-style: none;
 
       flex: 2 auto;
@@ -115,6 +116,14 @@ input {
           }
         }
       }
+    }
+
+    header {
+      box-sizing: border-box;
+      height: 24px;
+      padding: 6px;
+      display: block;
+      color: #666;
     }
 
     footer {

@@ -9,21 +9,23 @@ import Tableau
 import String
 import Dict
 
+type Domain = Ints | Reals
+
 type Solver = Solver
 
 load : String -> Task.Task x Solver
 load z3_url =
   Native.Solver.load z3_url
 
-solve : Sheet.Sheet -> Tableau.Tableau -> Solver -> Result String (Sheet.Sheet)
-solve sheet tableau solver =
+solve : Sheet.Sheet -> Tableau.Tableau -> Domain -> Solver -> Result String (Sheet.Sheet)
+solve sheet tableau domain solver =
   let
     result =
       case Tableau.toSmt tableau of
         Nothing -> -- When there are no assertions, do not call the solver
           Ok []
         Just (program, ids) ->
-          Native.Solver.solve solver program ids
+          Native.Solver.solve solver program ids (domain == Ints)
   in
     case result of
       -- Ok Dict String Float

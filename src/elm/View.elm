@@ -1,6 +1,6 @@
 module View (view) where 
 
-import Html exposing (Html, a, div, span, text, table, thead, tbody, th, tr, td, button, textarea, footer, main', ul, li)
+import Html exposing (Html, a, div, span, text, table, thead, tbody, th, tr, td, button, textarea, header, footer, main', select, option, ul, li)
 import Html.Attributes exposing (class, classList, value, key, id)
 import Html.Events exposing (onClick, onDoubleClick, onFocus, onBlur)
 import Signal
@@ -8,12 +8,14 @@ import Maybe
 import String
 
 import Helpers.Input
+import Helpers.Select
 import Model exposing (Action(..), Focus(..))
 import Sheet
 import Cell exposing (Cell(..))
 import Constraint exposing (Context(..))
 import Addr
 import Set
+import Solver exposing (Domain(..))
 
 type Header = RowHeader | ColHeader
 
@@ -109,7 +111,7 @@ view address model =
       [ classList [("app", True), ("unsat", model.unsat)] ]
       (case model.solver of
       Nothing ->
-        [ div [ class "loader" ] [text "Loading solver..."] ]
+        [ div [ class "loader" ] [text "Loading solver (may take a minute)..."] ]
       Just (Err _) ->
         [ div [ class "loader" ] [text "Error loading solver. Check console output for possible hints."] ]
       Just (Ok _) ->
@@ -133,7 +135,12 @@ view address model =
             , classList [("selected", model.focus == Tableau)]
             --, onClick address (SwitchFocus Tableau)
             ]
-            [ viewTableau model.tableau
+            [ header 
+              []
+              [ text "Domain:" 
+              , Helpers.Select.select [(Ints, "Ints"), (Reals, "Reals")] model.domain address ChangeDomain
+              ]
+            , viewTableau model.tableau
             , footer [] [
                 Helpers.Input.input 
                   { initialValue = ""

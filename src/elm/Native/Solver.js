@@ -43,14 +43,18 @@ Elm.Native.Solver.make = function(localRuntime) {
         request.send();
       });
     },
-    solve: F3(function(z3em, program, varsList) {
+    solve: F4(function(z3em, program, varsList, ints) {
       var vars = List.toArray(varsList);
 
       console.log("Solving ", program, "with", z3em, vars);
 
       var stdout = [];
       var stderr = [];
-      var before = "(push)\n(set-option :pp-decimal true)\n" + vars.map(function(name) { return "(declare-const " + name + " Real)"; }).join("\n") + "\n";
+      var before = "(push)\n";
+      if (!ints) {
+        before += "(set-option :pp-decimal true)\n";
+      }
+      before += vars.map(function(name) { return "(declare-const " + name + " " + (ints ? "Int" : "Real") + ")"; }).join("\n") + "\n";
       var after = "(check-sat)\n(get-value ("+vars.join(" ")+"))\n(pop)";
       var program = before + program + after;
       console.log("SMT:", program);

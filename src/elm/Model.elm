@@ -26,11 +26,12 @@ type alias Model =
   -- If Nothing, no cell is being edited. If Just, currently selected cell is being edited
   , editing : Maybe Editing
   , tableau: Tableau.Tableau
+  , domain: Solver.Domain
   , solver: Maybe (Result String Solver.Solver) -- available when z3 solver loads successfully (see LoadSolver action)
 
   -- When true, model is unsatisfiable
   , unsat: Bool
-  -- This hold last satisfiable model, if any
+  -- This holds last satisfiable model, if any
   , lastSat: Maybe (Sheet.Sheet, Tableau.Tableau)
   }
 
@@ -41,6 +42,7 @@ empty =
   , selection = Addr.fromColRow 0 0
   , editing = Nothing
   , tableau = Tableau.empty
+  , domain = Solver.Reals
   , solver = Nothing
   , unsat = False
   , lastSat = Nothing
@@ -57,6 +59,7 @@ type Action
   ---
   | LoadSolver (Result String Solver.Solver)
   | Solve
+  | ChangeDomain Solver.Domain
   | AddConstraint String
   | DropConstraint Int
   | Undo
@@ -131,7 +134,7 @@ update action model =
     Solve -> 
       case model.solver of
         Just (Ok solver) ->  
-          case Solver.solve model.sheet model.tableau solver of
+          case Solver.solve model.sheet model.tableau model.domain solver of
             Ok solution ->
               noFx
                 { model
@@ -159,6 +162,11 @@ update action model =
       anotherActionFx Solve 
         { model |
           tableau = Tableau.dropAt i model.tableau
+        }
+    ChangeDomain d ->
+      anotherActionFx Solve
+        { model |
+          domain = d
         }
     Undo ->
       case (model.unsat, model.lastSat) of
