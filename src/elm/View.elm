@@ -106,7 +106,7 @@ view address model =
       |> tbody []
   in
     div
-      [ classList [("app", True)] ]
+      [ classList [("app", True), ("unsat", model.unsat)] ]
       (case model.solver of
       Nothing ->
         [ div [ class "loader" ] [text "Loading solver..."] ]
@@ -123,6 +123,11 @@ view address model =
               , body
               ]
           ]
+        , div
+            [ id "unsat" ]
+            [ text "Constraints cannot be satisfied" 
+            , a [onClick address Undo] [ text "Undo"]
+            ]
         , div
             [ id "constraints"
             , classList [("selected", model.focus == Tableau)]

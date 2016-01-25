@@ -27,6 +27,11 @@ type alias Model =
   , editing : Maybe Editing
   , tableau: Tableau.Tableau
   , solver: Maybe (Result String Solver.Solver) -- available when z3 solver loads successfully (see LoadSolver action)
+
+  -- When true, model is unsatisfiable
+  , unsat: Bool
+  -- This hold last satisfiable model, if any
+  , lastSat: Maybe (Sheet.Sheet, Tableau.Tableau)
   }
 
 empty : Model
@@ -37,6 +42,8 @@ empty =
   , editing = Nothing
   , tableau = Tableau.empty
   , solver = Nothing
+  , unsat = False
+  , lastSat = Nothing
   }
 
 isEditing : Model -> Bool
@@ -52,6 +59,7 @@ type Action
   | Solve
   | AddConstraint String
   | DropConstraint Int
+  | Undo
   ---
   | Select Addr -- Direct selection of the cell at given address
   | Move Addr.Direction -- Keyboard movement in this relative direction
@@ -126,11 +134,16 @@ update action model =
           case Solver.solve model.sheet model.tableau solver of
             Ok solution ->
               noFx
-                { model |
-                  sheet = solution
+                { model
+                | sheet = solution
+                , unsat = False
+                , lastSat = Just (model.sheet, model.tableau)
                 }
             Err error ->
-              nop
+              noFx
+                { model 
+                | unsat = True
+                }
         _ ->
           let _ = Debug.log "No solver available" in nop
     AddConstraint str ->
@@ -147,6 +160,18 @@ update action model =
         { model |
           tableau = Tableau.dropAt i model.tableau
         }
+    Undo ->
+      case (model.unsat, model.lastSat) of
+        (False, _) -> 
+          nop
+        (True, Nothing) ->
+          let _ = Debug.log "Can't undo - no satisfiable model known" in nop
+        (True, Just (sheet, tableau)) ->
+          anotherActionFx Solve 
+            { model 
+            | sheet = sheet
+            , tableau = tableau
+            }
     ---
     Clear ->
       let
