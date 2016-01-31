@@ -128,7 +128,7 @@ view address model =
         , div
             [ id "unsat" ]
             [ text "Constraints cannot be satisfied" 
-            , a [onClick address Undo] [ text "Undo"]
+            , a [onClick address Undo] [ text "Undo" ]
             ]
         , div
             [ id "constraints"
@@ -137,8 +137,14 @@ view address model =
             ]
             [ header 
               []
-              [ text "Domain:" 
-              , Helpers.Select.select [(Ints, "Ints"), (Reals, "Reals")] model.domain address ChangeDomain
+              [ div 
+                  []
+                  [ text "Domain:" 
+                  , Helpers.Select.select [(Ints, "Ints"), (Reals, "Reals")] model.domain address ChangeDomain
+                  ]
+              , div
+                  []
+                  [ button [onClick address Save] [ text "Save" ]]
               ]
             , viewTableau model.tableau
             , footer [] [

@@ -12,6 +12,8 @@ import Solver
 import Constraint exposing (Context(..))
 import Tableau
 
+import Http
+import History
 import Json.Decode as Decode exposing ((:=))
 import Json.Encode as Encode
 
@@ -76,6 +78,7 @@ type Action
   | Clear -- updates selected cell to an empty cell
   ---
   | Save -- saves sheet and pushes the new url to navigation stack if successful
+  | SaveResult (Result Http.Error String)
   ---
   | Nop
 
@@ -98,9 +101,26 @@ update action model =
       nop
     Save ->
       let
-        _ = Debug.log "Encoded:" (encode model)
+        requestTask =
+          Http.post
+            ("ok" := Decode.string)
+            "/pickle"
+            (encode model |> Http.string)
+          |> Task.toResult
+          |> Task.map SaveResult
+          |> Effects.task
       in
-      nop
+      (model, requestTask)
+    SaveResult r ->
+      case r of
+        Err err ->
+          let _ = Debug.log "Save failed" err
+          in
+          nop
+        Ok slug ->
+          ( model
+          , History.replacePath ("/" ++ slug) |> Task.map (always Nop) |> Effects.task
+          )
     SwitchFocus f ->
       noFx
         { model | 
