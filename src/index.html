@@ -10,7 +10,8 @@
     <script type="text/javascript" src="patches.js"></script>
     <script type="text/javascript">
       var app = Elm.fullscreen(Elm.App, {
-        z3: "./z3-emscripten/z3.js"
+        z3: "./z3-emscripten/z3.js",
+        pickle: "{{.Data}}"
       });
 
       // Handle focus

@@ -1,4 +1,4 @@
-module Sheet (Sheet, initialize, get, fold, map, update, toList, move, insertRow, insertCol) where
+module Sheet (Sheet, initialize, get, fold, map, update, toList, move, insertRow, insertCol, decoder, encode) where
 
 import Cell exposing (Cell, Cell(..))
 import Addr exposing (Addr, Direction(..))
@@ -6,8 +6,28 @@ import Matrix
 import Helpers.Matrix
 import Basics
 
+import Json.Decode as Decode exposing ((:=))
+import Json.Encode as Encode
+
 type alias Sheet =
   { cells : Matrix.Matrix Cell }
+
+decoder : Decode.Decoder Sheet
+decoder =
+  Decode.object1
+    (\list -> { cells = Matrix.fromList list })
+    (Decode.list (Decode.list Cell.decoder))
+
+encode : Sheet -> Encode.Value
+encode sheet =
+  sheet
+  |> toList
+  |> List.map (\row ->
+      row
+      |> List.map Cell.encode
+      |> Encode.list
+  )
+  |> Encode.list
 
 loc : Addr -> Matrix.Location
 loc addr = 

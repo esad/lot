@@ -23,11 +23,22 @@ inputs =
 
 port z3: String -- path to z3-emscripten
 
+port pickle: String -- potentially pickled model
+
+initialModel : Model.Model
+initialModel = 
+  case Model.decode pickle of
+    Ok model -> Debug.log "Unpickled" model
+    Err msg ->
+      let _ = Debug.log ("Error unpickling" ++ pickle) msg
+      in
+      Model.empty
+
 app : StartApp.App Model.Model
 app =
   StartApp.start
     { init = 
-        ( Model.empty
+        ( initialModel
         , Solver.load z3 -- Start loading solver at start
           |> Task.toResult
           |> Task.map LoadSolver

@@ -1,8 +1,10 @@
-module Tableau (Tableau, empty, dropAt, parse, append, dropCell, toSmt, source) where
+module Tableau (Tableau, empty, dropAt, parse, append, dropCell, toSmt, source, decoder, encode) where
 
 import String
 import Result
 import Set
+import Json.Decode as Decode
+import Json.Encode as Encode
 
 import Constraint exposing (Constraint, Context(..))
 
@@ -13,6 +15,22 @@ empty : Tableau
 empty =
   []
 
+decoder : Decode.Decoder Tableau
+decoder =
+  let
+    constraintDecoder =
+      Decode.customDecoder
+        Decode.string
+        (Constraint.parse GlobalContext >> Result.formatError (String.join ";"))
+  in
+  Decode.list constraintDecoder
+
+encode : Tableau -> Encode.Value
+encode tableau =
+  tableau
+  |> List.map (Constraint.toString GlobalContext >> Encode.string)
+  |> Encode.list
+  
 -- Drops a constraint at given index, if it exists
 dropAt : Int -> Tableau -> Tableau
 dropAt i xs =

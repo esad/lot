@@ -1,4 +1,4 @@
-module Model (Model, Action, Action(..), Focus(..), empty, isEditing, update) where
+module Model (Model, Action, Action(..), Focus(..), empty, isEditing, update, decode) where
 
 import Sheet
 import Cell exposing (Cell(..))
@@ -11,6 +11,9 @@ import Effects
 import Solver
 import Constraint exposing (Context(..))
 import Tableau
+
+import Json.Decode as Decode exposing ((:=))
+import Json.Encode as Encode
 
 type Focus = Sheet | Tableau
 
@@ -72,6 +75,8 @@ type Action
   | Cancel
   | Clear -- updates selected cell to an empty cell
   ---
+  | Save -- saves sheet and pushes the new url to navigation stack if successful
+  ---
   | Nop
 
 update : Action -> Model -> (Model, Effects.Effects Action)
@@ -90,6 +95,11 @@ update action model =
   in
   case action of
     Nop ->
+      nop
+    Save ->
+      let
+        _ = Debug.log "Encoded:" (encode model)
+      in
       nop
     SwitchFocus f ->
       noFx
@@ -295,3 +305,45 @@ update action model =
           selection = selection,
           sheet = sheet 
         }
+
+-- Encoding/decoding
+
+decode : String -> Result.Result String Model
+decode str = 
+  let
+    domainFromString str =
+      if str == "ints" then Solver.Ints else Solver.Reals
+    build sheet tableau domain =
+      let _ = Debug.log "Decoded" (sheet,tableau, domain)
+      in
+      { empty
+      | sheet = sheet
+      , tableau = tableau
+      , domain = domain
+      }
+    decoder =
+      Decode.object3
+        build
+        ("sheet" := Sheet.decoder)
+        ("tableau" := Tableau.decoder)
+        ("domain" := Decode.object1 domainFromString Decode.string)
+  in
+    Decode.decodeString decoder str
+
+encode : Model -> String
+encode model =
+  let
+    encoder =
+      Encode.object
+        [ ("sheet", Sheet.encode model.sheet)
+        , ("tableau", Tableau.encode model.tableau)
+        , ("domain",
+            Encode.string 
+            (case model.domain of
+              Solver.Ints -> "ints"
+              Solver.Reals -> "reals"
+            )
+          )
+        ]
+  in
+    Encode.encode 0 encoder
