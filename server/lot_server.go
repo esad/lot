@@ -100,8 +100,11 @@ func create(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Internal error while saving", 500)
 				return
 			} else {
-				url := fmt.Sprintf("/%s", id)
-				http.Redirect(w, r, url, 301)
+				// url := fmt.Sprintf("/%s", id)
+				// http.Redirect(w, r, url, 301)
+				// XmlHttpRequest is bad dealing whilth redirects, so output an {"ok":id} here instead
+				w.Header().Set("Content-Type", "application/json")
+				fmt.Fprintf(w,"{\"ok\":\"%s\"}", id)
 				return
 			}
 		}
