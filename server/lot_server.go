@@ -3,16 +3,16 @@ package lot_server
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
-	"io/ioutil"
-	"html/template"
-  "log"
 
 	"github.com/gorilla/mux"
 
 	"google.golang.org/appengine"
-  "google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/datastore"
 )
 
 type Pickle struct {
@@ -22,16 +22,16 @@ type Pickle struct {
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 func RandString(n int) string {
-    b := make([]byte, n)
-    for i := range b {
-        b[i] = alphabet[rand.Intn(len(alphabet))]
-    }
-    return string(b)
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = alphabet[rand.Intn(len(alphabet))]
+	}
+	return string(b)
 }
 
 func isJSON(s string) bool {
-    var js map[string]interface{}
-    return json.Unmarshal([]byte(s), &js) == nil
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(s), &js) == nil
 }
 
 func init() {
@@ -43,9 +43,9 @@ func init() {
 
 func show(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-  id := params["id"]
-  if id != "" {
-  	ctx := appengine.NewContext(r)
+	id := params["id"]
+	if id != "" {
+		ctx := appengine.NewContext(r)
 		k := datastore.NewKey(ctx, "Pickle", id, 0, nil)
 		p := new(Pickle)
 		if err := datastore.Get(ctx, k, p); err != nil {
@@ -54,13 +54,13 @@ func show(w http.ResponseWriter, r *http.Request) {
 		}
 
 		t, err := template.ParseFiles("static/index.html")
-    if (err != nil) {
-        log.Println(err)
-        http.Error(w, "Couldn't read index.html", 500)
-        return
-    }
-    t.Execute(w, p)
-  }
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Couldn't read index.html", 500)
+			return
+		}
+		t.Execute(w, p)
+	}
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
@@ -84,8 +84,8 @@ func create(w http.ResponseWriter, r *http.Request) {
 	for length < 10 {
 		id := RandString(length)
 
-		if (id == "pickle") {
-			continue;
+		if id == "pickle" {
+			continue
 		}
 
 		p := new(Pickle)
@@ -100,9 +100,9 @@ func create(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Internal error while saving", 500)
 				return
 			} else {
-				 url := fmt.Sprintf("/%s", id)
-				 http.Redirect(w, r, url, 301)
-				 return
+				url := fmt.Sprintf("/%s", id)
+				http.Redirect(w, r, url, 301)
+				return
 			}
 		}
 
