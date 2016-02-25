@@ -13,3 +13,9 @@ Google App Engine service (written in Go), which does the following
 with the pickled JSON data.
 
 This should be picked up by the Lot app which will unpickle it and if everything goes well load the stored state.
+
+## Deployment
+
+Provided you've installed the Go App Engine SDK
+
+  go-app deploy
