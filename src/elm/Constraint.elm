@@ -176,7 +176,7 @@ constExpr =
 
 identifier : Parser Expr
 identifier = 
-  Id `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "expected a cell identifier"
+  (Id << String.toLower) `map` regex "[a-zA-Z][a-zA-Z0-9]*" <?> "expected a cell identifier"
 
 expr : Parser Expr
 expr = rec <| \() -> term `chainl` (Calc `map` addOp)
